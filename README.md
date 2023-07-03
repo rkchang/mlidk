@@ -4,7 +4,7 @@
 
 ```
 clang/gcc
-llvm-14 // for MacOS: brew install llvm@14
+llvm 16
 cmake
 clang-tidy
 Ninja/Make
