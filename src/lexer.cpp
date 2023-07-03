@@ -5,22 +5,22 @@
 const std::map<std::string, TokenTag> KeyWords = {{"let", TokenTag::LET},
                                                   {"in", TokenTag::IN}};
 
-Lexer::Lexer(std::string_view Src, std::string Filename)
-    : Index(0), Line(1), Column(1), Size(Src.length()), Src(Src),
+Lexer::Lexer(std::string_view Source, std::string Filename)
+    : Index(0), Line(1), Column(1), Size(Source.length()), Source(Source),
       Filename(Filename) {}
 
 /**
  * Lexes a single token
  */
-Token Lexer::lex() {
+auto Lexer::lex() -> Token {
   // Skip all leading whitespace
   takeWhile(std::isspace);
-  if (Index >= Size) {
+  if (isDone()) {
     return Token{TokenTag::EOI, "", Filename, Line, Column};
   }
 
   // Keep track of start position
-  auto Char = Src[Index];
+  auto Char = Source[Index];
   auto StartLine = Line;
   auto StartCol = Column;
   switch (Char) {
@@ -55,9 +55,11 @@ Token Lexer::lex() {
   throw "Invalid Token";
 }
 
+auto Lexer::isDone() -> bool { return Index >= Size; }
+
 auto Lexer::step() -> char {
   // TODO: Check for out of range
-  auto Char = Src[Index];
+  auto Char = Source[Index];
   Index += 1;
   if (Char == '\n') {
     Line += 1;
@@ -69,11 +71,10 @@ auto Lexer::step() -> char {
 }
 
 auto Lexer::takeWhile(std::function<bool(char)> Predicate) -> std::string {
-  const auto Len = Src.length();
   auto Start = Index;
-  while (Index < Len && Predicate(Src[Index])) {
+  while (!isDone() && Predicate(Source[Index])) {
     step();
   }
-  std::string SubStr{Src.substr(Start, Index - Start)};
+  std::string SubStr{Source.substr(Start, Index - Start)};
   return SubStr;
 }

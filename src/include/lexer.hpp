@@ -24,19 +24,24 @@ struct Token {
 
 class Lexer {
 public:
-  Lexer(std::string_view Src, std::string Filename);
+  Lexer(std::string_view Source, std::string Filename);
 
   /**
    * Lexes a single Token
    */
-  Token lex();
+  auto lex() -> Token;
+
+  /**
+   *
+   */
+  auto isDone() -> bool;
 
 private:
   size_t Index;
   int Line;
   int Column;
   const size_t Size;
-  const std::string_view Src;
+  const std::string_view Source;
   const std::string Filename;
 
   /**
@@ -47,5 +52,5 @@ private:
   /**
    * Consumes input while predicate is true
    */
-  auto takeWhile(std::function<bool(char)>) -> std::string;
+  auto takeWhile(std::function<bool(char)> Predicate) -> std::string;
 };
