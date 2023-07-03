@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 
 #include <gtest/gtest.h>
+#include <vector>
 
 TEST(LexerTest, LexEOI) {
   Lexer Lexer("", "hello.cpp");
@@ -70,4 +71,22 @@ TEST(LexerTest, LexSlash) {
   Token Tok = Lexer.lex();
   EXPECT_EQ(Tok.Tag, TokenTag::SLASH);
   EXPECT_EQ(Tok.Value, "/");
+}
+
+TEST(LexerTest, LexMany) {
+  Lexer Lexer("1 + x", "hello.cpp");
+  std::vector<Token> Tokens;
+  while (!Lexer.isDone()) {
+    Tokens.push_back(Lexer.lex());
+  }
+  EXPECT_EQ(Tokens[0].Tag, TokenTag::INT);
+  EXPECT_EQ(Tokens[0].Value, "1");
+
+  EXPECT_EQ(Tokens[1].Tag, TokenTag::PLUS);
+  EXPECT_EQ(Tokens[1].Value, "+");
+
+  EXPECT_EQ(Tokens[2].Tag, TokenTag::IDENT);
+  EXPECT_EQ(Tokens[2].Value, "x");
+
+  EXPECT_EQ(Tokens.size(), 3);
 }

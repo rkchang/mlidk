@@ -11,7 +11,7 @@ enum TokenTag {
   LET,
   IN,
   EQUAL,
-  EOI,
+  EOI, // Might not be present
 };
 
 struct Token {
@@ -27,12 +27,12 @@ public:
   Lexer(std::string_view Source, std::string Filename);
 
   /**
-   * Lexes a single Token
+   * Lexes a single Token, returns EOI if Lexer is done
    */
   auto lex() -> Token;
 
   /**
-   *
+   * Returns true if input has been fully consumed
    */
   auto isDone() -> bool;
 
