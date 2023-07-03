@@ -9,10 +9,7 @@ Lexer::Lexer(std::string_view Source, std::string Filename)
     : Index(0), Line(1), Column(1), Size(Source.length()), Source(Source),
       Filename(Filename) {}
 
-/**
- * Lexes a single token
- */
-auto Lexer::lex() -> Token {
+auto Lexer::token() -> Token {
   // Skip all leading whitespace
   takeWhile(std::isspace);
   if (isDone()) {
@@ -53,6 +50,19 @@ auto Lexer::lex() -> Token {
     }
   }
   throw "Invalid Token";
+}
+
+auto Lexer::peek() -> Token {
+  // This function should be const,
+  // but can't be because token() isn't.
+  auto OldIndex = Index;
+  auto OldLine = Line;
+  auto OldColumn = Column;
+  auto Token = token();
+  Index = OldIndex;
+  Line = OldLine;
+  Column = OldColumn;
+  return Token;
 }
 
 auto Lexer::isDone() -> bool { return Index >= Size; }

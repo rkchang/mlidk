@@ -29,7 +29,12 @@ public:
   /**
    * Lexes a single Token, returns EOI if Lexer is done
    */
-  auto lex() -> Token;
+  auto token() -> Token;
+
+  /**
+   * Peeks a single Token ahead
+   */
+  auto peek() -> Token;
 
   /**
    * Returns true if input has been fully consumed
