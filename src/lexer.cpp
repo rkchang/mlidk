@@ -6,24 +6,21 @@ const std::map<std::string, TokenTag> KeyWords = {{"let", TokenTag::LET},
                                                   {"in", TokenTag::IN}};
 
 Lexer::Lexer(std::string_view Src, std::string Filename)
-    : Index(0), Line(1), Column(1), Src(Src), Filename(Filename) {}
+    : Index(0), Line(1), Column(1), Size(Src.length()), Src(Src),
+      Filename(Filename) {}
 
 /**
  * Lexes a single token
  */
 Token Lexer::lex() {
-  const auto Len = Src.length();
   // Skip all leading whitespace
-  while (Index < Len && std::isspace(Src[Index])) {
-    step();
-  }
-  if (Index >= Len) {
+  takeWhile(std::isspace);
+  if (Index >= Size) {
     return Token{TokenTag::EOI, "", Filename, Line, Column};
   }
 
   // Keep track of start position
   auto Char = Src[Index];
-  auto Start = Index;
   auto StartLine = Line;
   auto StartCol = Column;
   switch (Char) {
@@ -43,22 +40,15 @@ Token Lexer::lex() {
   default:
     if (std::isdigit(Char)) {
       // Int
-      while (Index < Len && std::isdigit(Char)) {
-        step();
-      }
-      std::string Value{Src.substr(Start, Index - Start)};
+      auto Value = takeWhile(std::isdigit);
       return Token{TokenTag::INT, Value, Filename, StartLine, StartCol};
 
     } else if (std::isalpha(Char)) {
       // Ident
-      while (Index < Len && (std::isalpha(Char) || std::isdigit(Char))) {
-        step();
-      }
-      std::string Value{Src.substr(Start, Index - Start)};
-      auto Tag = TokenTag::IDENT;
-      if (KeyWords.contains(Value)) {
-        Tag = KeyWords.at(Value);
-      }
+      auto Value =
+          takeWhile([](char C) { return std::isdigit(C) || std::isalpha(C); });
+      auto Tag =
+          KeyWords.contains(Value) ? KeyWords.at(Value) : TokenTag::IDENT;
       return Token{Tag, Value, Filename, StartLine, StartCol};
     }
   }
@@ -76,4 +66,14 @@ auto Lexer::step() -> char {
     Column += 1;
   }
   return Char;
+}
+
+auto Lexer::takeWhile(std::function<bool(char)> Predicate) -> std::string {
+  const auto Len = Src.length();
+  auto Start = Index;
+  while (Index < Len && Predicate(Src[Index])) {
+    step();
+  }
+  std::string SubStr{Src.substr(Start, Index - Start)};
+  return SubStr;
 }

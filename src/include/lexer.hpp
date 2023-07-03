@@ -1,4 +1,4 @@
-#include <cstddef>
+#include <functional>
 #include <string>
 
 enum TokenTag {
@@ -25,14 +25,27 @@ struct Token {
 class Lexer {
 public:
   Lexer(std::string_view Src, std::string Filename);
+
+  /**
+   * Lexes a single Token
+   */
   Token lex();
 
 private:
   size_t Index;
   int Line;
   int Column;
+  const size_t Size;
   const std::string_view Src;
   const std::string Filename;
 
+  /**
+   * Steps over a single character
+   */
   auto step() -> char;
+
+  /**
+   * Consumes input while predicate is true
+   */
+  auto takeWhile(std::function<bool(char)>) -> std::string;
 };
