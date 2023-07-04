@@ -1,9 +1,37 @@
+#include <format>
 #include <lexer.hpp>
-#include <map>
+#include <string>
+#include <unordered_map>
 
 // All keywords in language
-const std::map<std::string, TokenTag> KeyWords = {{"let", TokenTag::LET},
-                                                  {"in", TokenTag::IN}};
+const std::unordered_map<std::string, TokenTag> KeyWords = {
+    {"let", TokenTag::LET}, {"in", TokenTag::IN}};
+
+//------------
+// LexerError
+//------------
+
+LexerError::LexerError(int Line, int Column, std::string Message,
+                       std::string Filename)
+    : Line(Line), Column(Column), Message(Message), Filename(Filename) {}
+
+auto LexerError::message() const -> const std::string {
+  std::string S = Filename + ":" + std::to_string(Line) + ":" +
+                  std::to_string(Column) + ": " + Message;
+  return S;
+}
+
+auto LexerError::what() const noexcept -> const char * {
+  static std::string Msg = message();
+  return const_cast<char *>(Msg.c_str());
+}
+
+InvalidToken::InvalidToken(int Line, int Column, std::string Filename)
+    : LexerError(Line, Column, "Invalid Token", Filename) {}
+
+//--------
+// Lexer
+//--------
 
 Lexer::Lexer(std::string_view Source, std::string Filename)
     : Index(0), Line(1), Column(1), Size(Source.length()), Source(Source),
@@ -33,6 +61,9 @@ auto Lexer::token() -> Token {
   case '/':
     step();
     return Token{TokenTag::SLASH, "/", Filename, StartLine, StartCol};
+  case '=':
+    step();
+    return Token{TokenTag::EQUAL, "=", Filename, StartLine, StartCol};
 
   default:
     if (std::isdigit(Char)) {
@@ -49,7 +80,7 @@ auto Lexer::token() -> Token {
       return Token{Tag, Value, Filename, StartLine, StartCol};
     }
   }
-  throw "Invalid Token";
+  throw InvalidToken(Line, Column, Filename);
 }
 
 auto Lexer::peek() -> Token {

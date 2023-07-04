@@ -1,7 +1,8 @@
+#include <exception>
 #include <functional>
 #include <string>
 
-enum TokenTag {
+enum class TokenTag {
   INT,
   IDENT,
   PLUS,
@@ -12,6 +13,23 @@ enum TokenTag {
   IN,
   EQUAL,
   EOI, // Might not be present
+};
+
+class LexerError : public std::exception {
+public:
+  const int Line;
+  const int Column;
+  const std::string Message;
+  const std::string Filename;
+
+  LexerError(int Line, int Column, std::string Message, std::string Filename);
+  auto message() const -> const std::string;
+  auto what() const noexcept -> const char *;
+};
+
+class InvalidToken : public LexerError {
+public:
+  InvalidToken(int Line, int Column, std::string Filename);
 };
 
 struct Token {

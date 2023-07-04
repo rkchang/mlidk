@@ -101,3 +101,30 @@ TEST(LexerTest, LexMany) {
 
   EXPECT_EQ(Tokens.size(), 3);
 }
+
+TEST(LexerTest, LexLetInExpr) {
+  Lexer Lexer("let i = 1 + x", "hello.cpp");
+  std::vector<Token> Tokens;
+  while (!Lexer.isDone()) {
+    Tokens.push_back(Lexer.token());
+  }
+  EXPECT_EQ(Tokens[0].Tag, TokenTag::LET);
+  EXPECT_EQ(Tokens[0].Value, "let");
+
+  EXPECT_EQ(Tokens[1].Tag, TokenTag::IDENT);
+  EXPECT_EQ(Tokens[1].Value, "i");
+
+  EXPECT_EQ(Tokens[2].Tag, TokenTag::EQUAL);
+  EXPECT_EQ(Tokens[2].Value, "=");
+
+  EXPECT_EQ(Tokens[3].Tag, TokenTag::INT);
+  EXPECT_EQ(Tokens[3].Value, "1");
+
+  EXPECT_EQ(Tokens[4].Tag, TokenTag::PLUS);
+  EXPECT_EQ(Tokens[4].Value, "+");
+
+  EXPECT_EQ(Tokens[5].Tag, TokenTag::IDENT);
+  EXPECT_EQ(Tokens[5].Value, "x");
+
+  EXPECT_EQ(Tokens.size(), 6);
+}
