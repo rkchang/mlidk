@@ -18,6 +18,11 @@ find_package(LLVM 16.0.6 REQUIRED CONFIG EXACT)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
+find_package(MLIR 16.0.6 REQUIRED CONFIG EXACT)
+
+message(STATUS "Found MLIR ${MLIR_PACKAGE_VERSION}")
+message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+
 # Set your project compile flags.
 # E.g. if using the C++ header files
 # you will need to enable C++11 support
@@ -43,14 +48,14 @@ FetchContent_MakeAvailable(googletest)
 
 
 # -------------------------------
-# Executable and Flags 
+# Executable and Flags
 # -------------------------------
 add_executable(mlidk ${ALL_SRC_FILES})
 
 # Add headers
 target_include_directories(mlidk PRIVATE "src/include")
 
-# Debug Build flags 
+# Debug Build flags
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
   -fsanitize=address \
   -fno-omit-frame-pointer \
@@ -63,11 +68,11 @@ set (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
   -g"
 )
 
-# General Build flags 
-target_compile_options(mlidk PRIVATE 
-  -Wall 
-  -Werror 
-  -Wpedantic 
+# General Build flags
+target_compile_options(mlidk PRIVATE
+  -Wall
+  -Werror
+  -Wpedantic
   -Wextra
   -fPIE
 )
@@ -82,21 +87,21 @@ target_link_libraries(mlidk ${llvm_libs})
 
 
 # -------------------------------
-# Google Test targets 
+# Google Test targets
 # -------------------------------
 
 enable_testing()
 
 add_executable(all_tests
-  ${TEST_FILES} 
+  ${TEST_FILES}
   ${SRC_FILES}
   ${HPP_FILES}
 )
 
-target_compile_options(all_tests PRIVATE 
-  -Wall 
-  -Werror 
-  -Wpedantic 
+target_compile_options(all_tests PRIVATE
+  -Wall
+  -Werror
+  -Wpedantic
   -Wextra
   -fPIE
 )
