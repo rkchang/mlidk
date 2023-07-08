@@ -14,6 +14,8 @@ enum class TokenTag {
   LET,
   IN,
   EQUAL,
+  LPAREN,
+  RPAREN,
   EOI, // Might not be present
 };
 
