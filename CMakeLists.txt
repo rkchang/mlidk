@@ -37,9 +37,9 @@ include(FetchContent)
 
 # Source: https://google.github.io/googletest/quickstart-cmake.html
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest
-  GIT_TAG release-1.12.1
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest
+        GIT_TAG release-1.12.1
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -50,32 +50,33 @@ FetchContent_MakeAvailable(googletest)
 # -------------------------------
 # Executable and Flags
 # -------------------------------
-add_executable(mlidk ${ALL_SRC_FILES})
+add_executable(mlidk ${ALL_SRC_FILES}
+        )
 
 # Add headers
 target_include_directories(mlidk PRIVATE "src/include")
 
 # Debug Build flags
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
   -fsanitize=address \
   -fno-omit-frame-pointer \
   -fsanitize=undefined \
   -fno-optimize-sibling-calls \
   -g"
-)
-set (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
+        )
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
   -fsanitize=address,undefined \
   -g"
-)
+        )
 
 # General Build flags
 target_compile_options(mlidk PRIVATE
-  -Wall
-  -Werror
-  -Wpedantic
-  -Wextra
-  -fPIE
-)
+        -Wall
+        -Werror
+        -Wpedantic
+        -Wextra
+        -fPIE
+        )
 
 
 # Find the libraries that correspond to the LLVM components
@@ -83,7 +84,13 @@ target_compile_options(mlidk PRIVATE
 llvm_map_components_to_libnames(llvm_libs support core irreader)
 
 # Link against LLVM libraries
-target_link_libraries(mlidk ${llvm_libs})
+target_link_libraries(mlidk ${llvm_libs}
+        LLVMSupport
+        MLIRTransforms
+        MLIRIR
+        MLIRPass
+        MLIRTransforms
+        )
 
 
 # -------------------------------
@@ -93,25 +100,25 @@ target_link_libraries(mlidk ${llvm_libs})
 enable_testing()
 
 add_executable(all_tests
-  ${TEST_FILES}
-  ${SRC_FILES}
-  ${HPP_FILES}
-)
+        ${TEST_FILES}
+        ${SRC_FILES}
+        ${HPP_FILES}
+        )
 
 target_compile_options(all_tests PRIVATE
-  -Wall
-  -Werror
-  -Wpedantic
-  -Wextra
-  -fPIE
-)
+        -Wall
+        -Werror
+        -Wpedantic
+        -Wextra
+        -fPIE
+        )
 
 target_include_directories(all_tests PRIVATE "src/include")
 
 target_link_libraries(all_tests
-  GTest::gtest_main
-  ${llvm_libs}
-)
+        GTest::gtest_main
+        ${llvm_libs}
+        )
 
 
 include(GoogleTest)
