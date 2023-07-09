@@ -86,10 +86,10 @@ auto Lexer::token() -> Token {
     return Token{TokenTag::EQUAL, "=", Filename, StartLine, StartCol};
   case '(':
     step();
-    return Token{TokenTag::LPAREN, "=", Filename, StartLine, StartCol};
+    return Token{TokenTag::LPAREN, "(", Filename, StartLine, StartCol};
   case ')':
     step();
-    return Token{TokenTag::RPAREN, "=", Filename, StartLine, StartCol};
+    return Token{TokenTag::RPAREN, ")", Filename, StartLine, StartCol};
 
   default:
     if (std::isdigit(Char)) {
