@@ -22,7 +22,8 @@ cmake --build .
 ### Run
 
 ```
-./build/mlidk
+./build/mlidk <path_to_file>
+./build/mlidk examples/hello.mlidk
 ```
 
 ### Test
@@ -36,5 +37,3 @@ cmake --build .
 ```
 cmake --build . --target clean
 ```
-
-# Test

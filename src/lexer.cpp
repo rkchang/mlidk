@@ -3,6 +3,26 @@
 #include <string>
 #include <unordered_map>
 
+auto TokenOp::TagToOp(TokenTag Tag) -> OpType {
+  std::unordered_map<TokenTag, OpType> Map{
+      {TokenTag::PLUS, OpType::ADD},
+      {TokenTag::MINUS, OpType::MINUS},
+      {TokenTag::STAR, OpType::MUL},
+      {TokenTag::SLASH, OpType::DIV},
+  };
+  return Map[Tag];
+}
+
+auto TokenOp::OpToStr(OpType Op) -> std::string {
+  std::unordered_map<OpType, std::string> Map{
+      {OpType::ADD, "+"},
+      {OpType::MINUS, "-"},
+      {OpType::MUL, "*"},
+      {OpType::DIV, "/"},
+  };
+  return Map[Op];
+}
+
 // All keywords in language
 const std::unordered_map<std::string, TokenTag> KeyWords = {
     {"let", TokenTag::LET}, {"in", TokenTag::IN}};
@@ -64,6 +84,12 @@ auto Lexer::token() -> Token {
   case '=':
     step();
     return Token{TokenTag::EQUAL, "=", Filename, StartLine, StartCol};
+  case '(':
+    step();
+    return Token{TokenTag::LPAREN, "(", Filename, StartLine, StartCol};
+  case ')':
+    step();
+    return Token{TokenTag::RPAREN, ")", Filename, StartLine, StartCol};
 
   default:
     if (std::isdigit(Char)) {

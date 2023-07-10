@@ -1,19 +1,38 @@
+#pragma once
+
 #include <exception>
 #include <functional>
 #include <string>
 
 enum class TokenTag {
-  INT,
-  IDENT,
-  PLUS,
+  // Operators
+  PLUS = 0,
   MINUS,
   STAR,
   SLASH,
+  // Not operators
+  INT,
+  IDENT,
   LET,
   IN,
   EQUAL,
+  LPAREN,
+  RPAREN,
   EOI, // Might not be present
 };
+
+namespace TokenOp {
+enum class OpType : char {
+  ADD = 0,
+  MINUS,
+  MUL,
+  DIV,
+};
+
+auto TagToOp(TokenTag) -> OpType;
+auto OpToStr(OpType) -> std::string;
+
+} // namespace TokenOp
 
 class LexerError : public std::exception {
 public:

@@ -33,6 +33,7 @@
 
 build
 cmakebuild
+cmake-build-debug
 .cache
 
 # CLion
