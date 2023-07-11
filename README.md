@@ -41,7 +41,7 @@ cmake --build . --target mlir-doc
 
 ```
 ./build/lettucec/lettucec <path_to_file>
-./build/lettucec/lettucec examples/hello.mlidk
+./build/lettucec/lettucec examples/hello.lettuce
 ```
 
 ### Test
