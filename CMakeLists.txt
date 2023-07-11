@@ -1,35 +1,47 @@
-cmake_minimum_required(VERSION 3.20.0)
-project(mlidk)
+cmake_minimum_required(VERSION 3.13.4)
+project(mlidk LANGUAGES CXX C)
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
 
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-include(src/CMakeLists.txt)
-include(unittests/CMakeLists.txt)
-
-# -------------------------------
-# Library setup
-# -------------------------------
-find_package(LLVM 16.0.6 REQUIRED CONFIG EXACT)
+set(CMAKE_CXX_STANDARD 20 CACHE STRING "C++ standard to conform to")
 
 
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+# ----------- LLVM and MLIR setup -----------
+
+
+find_package(MLIR REQUIRED CONFIG PATHS "~/dev/lettuce/third-party/llvm-project/install" NO_DEFAULT_PATH)
+
+message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-# Set your project compile flags.
-# E.g. if using the C++ header files
-# you will need to enable C++11 support
-# for your compiler.
+set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin)
+set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/lib)
+set(MLIR_BINARY_DIR ${CMAKE_BINARY_DIR})
 
-include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
-separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-add_definitions(${LLVM_DEFINITIONS_LIST})
+list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
+include(TableGen)
+include(AddLLVM)
+include(AddMLIR)
+include(HandleLLVMOptions)
+
+if(MLIR_ENABLE_BINDINGS_PYTHON)
+  include(MLIRDetectPythonEnv)
+  mlir_configure_python_dev_packages()
+endif()
+
+include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${MLIR_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_BINARY_DIR}/include)
+link_directories(${LLVM_BUILD_LIBRARY_DIR})
+add_definitions(${LLVM_DEFINITIONS})
+
+
+# ----------- Googletest setup -----------
 
 # Download Gtest
 include(FetchContent)
-
 # Source: https://google.github.io/googletest/quickstart-cmake.html
 FetchContent_Declare(
         googletest
@@ -41,74 +53,16 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 
+# ----------- Add subprojects -----------
 
-# -------------------------------
-# Executable and Flags 
-# -------------------------------
-add_executable(mlidk ${ALL_SRC_FILES})
-
-# Add headers
-target_include_directories(mlidk PRIVATE "src/include")
-
-# Debug Build flags 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
-  -fsanitize=address \
-  -fno-omit-frame-pointer \
-  -fsanitize=undefined \
-  -fno-optimize-sibling-calls \
-  -g"
-        )
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
-  -fsanitize=address,undefined \
-  -g"
-        )
-
-# General Build flags 
-target_compile_options(mlidk PRIVATE
-        -Wall
-        -Werror
-        -Wpedantic
-        -Wextra
-        -fPIE
-        )
-
-
-# Find the libraries that correspond to the LLVM components
-# that we wish to use
-llvm_map_components_to_libnames(llvm_libs support core irreader)
-
-# Link against LLVM libraries
-target_link_libraries(mlidk ${llvm_libs})
-
-
-# -------------------------------
-# Google Test targets 
-# -------------------------------
-
-enable_testing()
-
-add_executable(all_tests
-        ${TEST_FILES}
-        ${SRC_FILES}
-        ${HPP_FILES}
-        )
-
-target_compile_options(all_tests PRIVATE
-        -Wall
-        -Werror
-        -Wpedantic
-        -Wextra
-        -fPIE
-        )
-
-target_include_directories(all_tests PRIVATE "src/include")
-
-target_link_libraries(all_tests
-        GTest::gtest_main
-        ${llvm_libs}
-        )
-
-
-include(GoogleTest)
-gtest_discover_tests(all_tests)
-
+add_subdirectory(include) # headers and tablegen files
+add_subdirectory(lib) # tablegen implementation files
+if(MLIR_ENABLE_BINDINGS_PYTHON)
+  message(STATUS "Enabling Python API")
+  add_subdirectory(python)
+endif()
+add_subdirectory(test)
+add_subdirectory(standalone-opt)
+add_subdirectory(standalone-translate)
+add_subdirectory(lettucec) # the lettuce compiler
+add_subdirectory(unittests) # unittests

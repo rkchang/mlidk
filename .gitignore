@@ -35,6 +35,7 @@ build
 cmakebuild
 cmake-build-debug
 .cache
+third-party
 
 # CLion
 .idea

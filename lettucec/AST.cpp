@@ -1,4 +1,5 @@
 #include "AST.hpp"
+#include <cassert>
 
 LetExpr::LetExpr(std::string Name, std::unique_ptr<Expr> Value,
                  std::unique_ptr<Expr> Body)
