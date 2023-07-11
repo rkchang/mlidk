@@ -1,4 +1,4 @@
-add_executable(mlidk
+add_executable(lettucec
         mlidk.cpp # main file for letttucec
         AST.cpp
         ASTPrinter.cpp
@@ -20,7 +20,7 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
         )
 
 # General Build flags 
-target_compile_options(mlidk PRIVATE
+target_compile_options(lettucec PRIVATE
         -Wall
         -Werror
         -Wpedantic
@@ -30,7 +30,7 @@ target_compile_options(mlidk PRIVATE
 
 
 # Link against LLVM and MLIR libraries
-target_link_libraries(mlidk ${LIBS} )
+target_link_libraries(lettucec ${LIBS} )
 
-mlir_check_all_link_libraries(mlidk)
+mlir_check_all_link_libraries(lettucec)
 

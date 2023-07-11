@@ -1,45 +1,79 @@
 # mlidk
 
-### Dependencies
+
+### Build
+
+#### Build prerequisites
 
 ```
-clang 16.0.6
-llvm 16.0.6 
+clang 
 cmake
 clang-tidy
 Ninja/Make
 ```
 
-on MacOS with homebrew: `brew install llvm@16`
+#### Building
 
-### Build
-
-This will download/build llvm and lettuce.
 ```
 chmod +x build.sh
 ./build.sh
 ```
+- This will download/build llvm, lettuce and the unittests.
+- `build` will contain the build artifacts for lettucec and unittests.
+- `third-party` will be populated with the llvm source code.
+- `third-party/llvm-project/install/` will be where llvm is installed
 
-#### Tablegen docs
+#### Incremental builds
+- after running build.sh, you can run the following to rebuild 
 ```
+cd build
+cmake --build .
+```
+
+
+#### Building Tablegen docs
+```
+cd build
 cmake --build . --target mlir-doc
 ```
 
 ### Run
 
 ```
-./lettucec/mlidk <path_to_file>
-./lettucec/mlidk examples/hello.mlidk
+./build/lettucec/lettucec <path_to_file>
+./build/lettucec/lettucec examples/hello.mlidk
 ```
 
 ### Test
 
 ```
-./unittests/all_tests
+./build/unittests/all_tests
 ```
 
 ### Clean
 
 ```
+cd build
 cmake --build . --target clean
 ```
+
+## Project structure
+
+### Project layout
+```
+examples/                   # example lettuce programs
+include/                    # headers and tablegen files for the mlir
+lettucec/                   # the lettucec compiler sources
+lib/                        # TODO 
+python/                     # TODO
+standalone-opt/             # TODO
+standalone-translate/       # TODO
+test/                       # TODO
+third-party/                # contains llvm source and install
+unittests/                  # contains googletest unittests
+```
+
+- CMake files are in each directory and generally correspond to a project
+- For example, `lettucec/CMakeLists.txt` is the cmake file for the `lettucec` compiler and declares 
+the `lettucec` executable as well as the flags used to build it.
+- You must add new source files to both the `CMakeLists.txt` in `lettucec` and `unittests`
