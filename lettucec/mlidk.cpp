@@ -5,6 +5,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "Romaine/RomaineOps.h"
+
 std::optional<std::string> readFile(const std::string &Filename) {
   std::ifstream IFS(Filename);
   if (!IFS) {
@@ -34,4 +36,6 @@ int main(int argc, char *argv[]) {
   auto AST = Parsr.parse();
   auto Printer = ASTPrinter();
   AST->accept(Printer, 0);
+
+  auto fooOp = mlir::romaine::FooOp();
 }

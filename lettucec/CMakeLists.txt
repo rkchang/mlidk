@@ -6,6 +6,7 @@ add_executable(lettucec
         parser.cpp
 )
 
+
 # Debug Build flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
   -fsanitize=address \
@@ -26,6 +27,16 @@ target_compile_options(lettucec PRIVATE
         -Wpedantic
         -Wextra
         -fPIE
+        )
+
+get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+set(LIBS
+        ${dialect_libs}
+        ${conversion_libs}
+        MLIRArithDialect
+        MLIROptLib
+        MLIRStandalone
         )
 
 
