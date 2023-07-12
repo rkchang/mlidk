@@ -52,7 +52,8 @@ mkdir build
 cd build
 cmake .. \
   -DCMAKE_BUILD_TYPE=Debug \
-  -DLLVM_EXTERNAL_LIT="$ROOT/third-party/llvm-project/build/bin/llvm-lit"
+  -DLLVM_EXTERNAL_LIT="$ROOT/third-party/llvm-project/build/bin/llvm-lit" \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build .
 
 
