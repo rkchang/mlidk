@@ -36,7 +36,6 @@ set(LIBS
         ${conversion_libs}
         MLIRArithDialect
         MLIROptLib
-        MLIRStandalone
         )
 
 

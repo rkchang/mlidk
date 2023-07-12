@@ -57,12 +57,5 @@ FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(include) # headers and tablegen files
 add_subdirectory(lib) # tablegen implementation files
-if(MLIR_ENABLE_BINDINGS_PYTHON)
-  message(STATUS "Enabling Python API")
-  add_subdirectory(python)
-endif()
-add_subdirectory(test)
-add_subdirectory(standalone-opt)
-add_subdirectory(standalone-translate)
 add_subdirectory(lettucec) # the lettuce compiler
 add_subdirectory(unittests) # unittests
