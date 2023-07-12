@@ -71,8 +71,6 @@ include/Romaine/            # IR tablegen files and their headers
 lettucec/                   # the lettucec compiler sources
 lib/                        # libraries
 lib/Romaine                 # IR tablegen files and their sources
-python/                     # TODO
-test/                       # TODO
 third-party/                # contains llvm source and install
 unittests/                  # contains googletest unittests
 ```
