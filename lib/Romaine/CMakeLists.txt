@@ -12,4 +12,3 @@ add_mlir_dialect_library(MLIRRomaine
         MLIRIR
         MLIRInferTypeOpInterface
 	)
-message("lib/romaine")
