@@ -35,6 +35,8 @@ build
 cmakebuild
 cmake-build-debug
 .cache
+third-party
+.DS_Store
 
 # CLion
 .idea

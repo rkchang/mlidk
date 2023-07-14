@@ -43,7 +43,7 @@ public:
 
   LexerError(int Line, int Column, std::string Message, std::string Filename);
   auto message() const -> const std::string;
-  auto what() const noexcept -> const char *;
+  auto what() const noexcept -> const char * override;
 };
 
 class InvalidToken : public LexerError {
