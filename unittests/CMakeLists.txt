@@ -16,7 +16,17 @@ target_compile_options(all_tests PRIVATE
         -Wpedantic
         -Wextra
         -fPIE
-        )
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+        -fsanitize=undefined
+        -fno-optimize-sibling-calls
+        -g
+      )
+
+target_link_options(all_tests PRIVATE
+        -fsanitize=address,undefined
+        -g
+      )
 
 target_include_directories(all_tests PRIVATE "${PROJECT_SOURCE_DIR}/include")
 
