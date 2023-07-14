@@ -1,5 +1,5 @@
 add_executable(lettucec
-        mlidk.cpp # main file for letttucec
+        lettucec.cpp # main file for letttucec
         AST.cpp
         ASTPrinter.cpp
         lexer.cpp
