@@ -3,14 +3,14 @@
 #include <iostream>
 
 auto ASTPrinter::GetPrefix(std::any Context) -> std::string {
-  int IndentAmount = std::any_cast<int>(Context) - 1;
-  std::string s;
+  const int IndentAmount = std::any_cast<int>(Context) - 1;
+  std::string S;
   if (IndentAmount > 0) {
-    s = "" + std::string(IndentAmount, ' ');
+    S = "" + std::string(IndentAmount, ' ');
   }
-  s += "|";
+  S += "|";
 
-  return s;
+  return S;
 }
 
 auto ASTPrinter::IncrContext(std::any Context) -> int {

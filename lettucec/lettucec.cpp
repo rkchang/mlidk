@@ -8,7 +8,7 @@
 #include "Romaine/RomaineOps.h"
 
 std::optional<std::string> readFile(const std::string &Filename) {
-  std::ifstream IFS(Filename);
+  const std::ifstream IFS(Filename);
   if (!IFS) {
     std::cerr << "Error: could not open file '" << Filename << "'\n";
     return std::nullopt;
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
               << "\n";
     return 1;
   }
-  std::string Filename(argv[1]);
+  const std::string Filename(argv[1]);
   auto V = readFile(Filename);
   if (!V) {
     return 1;
@@ -37,5 +37,5 @@ int main(int argc, char *argv[]) {
   auto Printer = ASTPrinter();
   AST->accept(Printer, 0);
 
-  auto fooOp = mlir::romaine::FooOp();
+  auto FooOp = mlir::romaine::FooOp();
 }
