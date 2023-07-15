@@ -42,7 +42,7 @@ auto LexerError::message() const -> const std::string {
 }
 
 auto LexerError::what() const noexcept -> const char * {
-  static std::string Msg = message();
+  const static std::string Msg = message();
   return const_cast<char *>(Msg.c_str());
 }
 

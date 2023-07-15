@@ -1,3 +1,5 @@
+set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+
 add_executable(lettucec
         lettucec.cpp # main file for letttucec
         AST.cpp
