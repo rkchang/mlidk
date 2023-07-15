@@ -18,7 +18,6 @@ target_compile_options(all_tests PRIVATE
         -fPIE
         -fsanitize=address,undefined
         -fno-omit-frame-pointer
-        -fsanitize=undefined
         -fno-optimize-sibling-calls
         -g
       )
