@@ -20,8 +20,9 @@ if [ -d "third-party/llvm-project" ]; then
 fi
 
 # Build and download llvm-project
+rm -rf third-party 
+mkdir third-party
 cd third-party
-rm -rf llvm-project
 echo "----- Downloading llvm"
 curl -LO https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-16.0.6.tar.gz
 echo "----- Extracting llvm"
