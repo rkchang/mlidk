@@ -20,8 +20,9 @@ if [ -d "third-party/llvm-project" ]; then
 fi
 
 # Build and download llvm-project
+rm -rf third-party 
+mkdir third-party
 cd third-party
-rm -rf llvm-project
 echo "----- Downloading llvm"
 curl -LO https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-16.0.6.tar.gz
 echo "----- Extracting llvm"
@@ -46,8 +47,8 @@ cmake --build . --target install # This will install llvm to third-party/llvm-pr
 
 # Build lettuce
 echo "----- Building lettuce"
-cd $ROOT
-rm -rf $ROOT/build
+cd "$ROOT"
+rm -rf "$ROOT/build"
 mkdir build
 cd build
 cmake .. \

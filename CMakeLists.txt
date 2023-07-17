@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 20 CACHE STRING "C++ standard to conform to")
 # ----------- LLVM and MLIR setup -----------
 
 
-find_package(MLIR REQUIRED CONFIG PATHS "~/dev/lettuce/third-party/llvm-project/install" NO_DEFAULT_PATH)
+find_package(MLIR REQUIRED CONFIG PATHS "./third-party/llvm-project/install" NO_DEFAULT_PATH)
 
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
