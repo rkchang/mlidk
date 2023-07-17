@@ -3,6 +3,7 @@
 #include "AST.hpp"
 #include "lexer.hpp"
 #include <memory>
+#include <optional>
 
 class Parser {
   class Error : public std::runtime_error {
