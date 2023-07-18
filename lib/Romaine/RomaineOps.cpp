@@ -12,3 +12,18 @@
 
 #define GET_OP_CLASSES
 #include "Romaine/RomaineOps.cpp.inc"
+
+//void mlir::romaine::ConstantOp::build(mlir::OpBuilder &builder,
+//                                      mlir::OperationState &state, int value) {
+//  mlir::MLIRContext Context; // TODO: What???
+//  auto dataType = IntegerType::get(&Context, 32, IntegerType::Signed);
+//  auto dataAttribute = IntegerAttr::get(dataType, value);
+//  ConstantOp::build(builder, state, dataType, dataAttribute);
+//}
+
+// void mlir::romaine::BinOp::build(mlir::OpBuilder &builder,
+//                                  mlir::OperationState &state, mlir::Value
+//                                  lhs, mlir::Value rhs) {
+//   state.addTypes(builder.getI32Type());
+//   state.addOperands({lhs, rhs});
+// }
