@@ -10,9 +10,9 @@ include "Romaine/RomaineDialect.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 def Romaine_ConstantOp : Romaine_Op<"const", [Pure]> {
-    let summary = "Illustrates how to define an operation.";
+    let summary = "A constant integer value";
     let description = [{
-        The `romaine.foo` operation illustrates how to define a new
+        Represents a constant integer value
     }];
 
     let arguments = (ins I32Attr:$value);
