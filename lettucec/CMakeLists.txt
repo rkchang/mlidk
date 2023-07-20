@@ -6,6 +6,7 @@ add_executable(lettucec
         ASTPrinter.cpp
         lexer.cpp
         parser.cpp
+        MLIR_gen.cpp
 )
 
 

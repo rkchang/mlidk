@@ -34,13 +34,15 @@ mkdir install
 mkdir build
 cd build
 cmake -G Ninja ../llvm \
-   -DCMAKE_BUILD_TYPE="Release" \
+   -DCMAKE_BUILD_TYPE="Debug" \
    -DLLVM_ENABLE_PROJECTS="mlir;" \
    -DLLVM_TARGETS_TO_BUILD="Native" \
    -DCMAKE_INSTALL_PREFIX="../install" \
    -DLLVM_INSTALL_UTILS=ON \
    -DLLVM_INCLUDE_TOOLS=ON \
-   -DLLVM_ENABLE_ASSERTIONS=ON
+   -DLLVM_ENABLE_ASSERTIONS=ON \
+   -DLLVM_ENABLE_RTTI=ON \
+   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 echo "----- Building llvm"
 cmake --build .
 cmake --build . --target install # This will install llvm to third-party/llvm-project/install as specified above

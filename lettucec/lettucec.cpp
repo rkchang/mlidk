@@ -5,7 +5,11 @@
 #include <iostream>
 #include <sstream>
 
+#include "MLIR_gen.hpp"
+#include "Romaine/RomaineDialect.h"
 #include "Romaine/RomaineOps.h"
+#include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/OwningOpRef.h"
 
 std::optional<std::string> readFile(const std::string &Filename) {
   const std::ifstream IFS(Filename);
@@ -34,8 +38,18 @@ int main(int argc, char *argv[]) {
   auto Lexr = Lexer(Source, Filename);
   auto Parsr = Parser(Lexr);
   auto AST = Parsr.parse();
+
+  // Print out the AST
   auto Printer = ASTPrinter();
   AST->accept(Printer, 0);
 
-  auto FooOp = mlir::romaine::FooOp();
+  // Generate MLIR
+  mlir::MLIRContext Context;
+  Context.getOrLoadDialect<mlir::romaine::RomaineDialect>();
+  auto MLIRGenerator = MLIRGen(Context);
+  AST->accept(MLIRGenerator, 0);
+  mlir::OwningOpRef<mlir::ModuleOp> Module = MLIRGenerator.Module;
+
+  // Print out the MLIR
+  Module->dump();
 }

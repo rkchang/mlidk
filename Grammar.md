@@ -5,7 +5,7 @@ prog ::= expr
 
 expr ::= 'let' name '=' expr 'in' expr
          | term
-       
+
 term ::= factor ( ( '+' | '-' ) factor )*
 
 factor ::= primary ( ( '*' | '/' ) primary )*

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.13.4)
 project(mlidk LANGUAGES CXX C)
+cmake_policy(SET CMP0116 OLD)
 
 set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
 

@@ -14,12 +14,11 @@ include "mlir/IR/OpBase.td"
 
 def Romaine_Dialect : Dialect {
     let name = "romaine";
-    let summary = "A standalone out-of-tree MLIR dialect.";
+    let summary = "The highest level dialect in the lettuce hierarchy.";
     let description = [{
-        This dialect is an example of an out-of-tree MLIR dialect designed to
-        illustrate the basic setup required to develop MLIR-based tools without
-        working inside of the LLVM source tree.
+        TODO
     }];
+    let useFoldAPI = kEmitFoldAdaptorFolder; 
     let cppNamespace = "::mlir::romaine";
 }
 

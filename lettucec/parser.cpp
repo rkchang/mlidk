@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include <memory>
 // TODO: EOI?
 
 Parser::Error::Error(Token Found)
@@ -12,7 +13,8 @@ Parser::Parser(Lexer &Lex) : Lex(Lex) {}
 auto Parser::parse() -> std::unique_ptr<Expr> { return expression(); }
 
 auto Parser::expression() -> std::unique_ptr<Expr> {
-  if (match({TokenTag::LET})) {
+  if (auto LetOpt = match({TokenTag::LET})) {
+    const Location Loc = {LetOpt->Filename, LetOpt->Line, LetOpt->Column};
     auto V = match({TokenTag::IDENT});
     if (!V) {
       throw Error(Lex.peek());
@@ -26,7 +28,7 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
       throw Error(Lex.peek());
     }
     auto InExpr = expression();
-    return std::make_unique<LetExpr>(Name, std::move(EqExpr),
+    return std::make_unique<LetExpr>(Loc, Name, std::move(EqExpr),
                                      std::move(InExpr));
   }
   return term();
@@ -35,10 +37,11 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
 auto Parser::term() -> std::unique_ptr<Expr> {
   auto LeftExpr = factor();
   while (auto V = match({TokenTag::PLUS, TokenTag::MINUS})) {
+    const Location Loc = {V->Filename, V->Line, V->Column};
     auto Op = V->Tag;
     auto RightExpr = factor();
     LeftExpr = std::make_unique<BinaryExpr>(
-        std::move(LeftExpr), TokenOp::TagToOp(Op), std::move(RightExpr));
+        Loc, std::move(LeftExpr), TokenOp::TagToOp(Op), std::move(RightExpr));
   }
   return LeftExpr;
 }
@@ -46,10 +49,11 @@ auto Parser::term() -> std::unique_ptr<Expr> {
 auto Parser::factor() -> std::unique_ptr<Expr> {
   auto LeftExpr = primary();
   while (auto V = match({TokenTag::STAR, TokenTag::SLASH})) {
+    const Location Loc = {V->Filename, V->Line, V->Column};
     auto Op = V->Tag;
     auto RightExpr = primary();
     LeftExpr = std::make_unique<BinaryExpr>(
-        std::move(LeftExpr), TokenOp::TagToOp(Op), std::move(RightExpr));
+        Loc, std::move(LeftExpr), TokenOp::TagToOp(Op), std::move(RightExpr));
   }
   return LeftExpr;
 }
@@ -64,10 +68,12 @@ auto Parser::primary() -> std::unique_ptr<Expr> {
   }
   if (auto V = match({TokenTag::INT})) {
     auto Num = std::stoi(V->Value);
-    return std::make_unique<IntExpr>(Num);
+    const Location Loc = {V->Filename, V->Line, V->Column};
+    return std::make_unique<IntExpr>(Loc, Num);
   }
   if (auto V = match({TokenTag::IDENT})) {
-    return std::make_unique<VarExpr>(V->Value);
+    const Location Loc = {V->Filename, V->Line, V->Column};
+    return std::make_unique<VarExpr>(Loc, V->Value);
   }
   throw Error(Lex.peek());
 }
