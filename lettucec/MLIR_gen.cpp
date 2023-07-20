@@ -21,8 +21,7 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
   auto V = Node.Value->accept(*this, Context);
   auto Value = std::any_cast<mlir::Value>(V);
   SymbolTable.insert(Node.Name, Value);
-  Node.Body->accept(*this, Context);
-  return NULL;
+  return Node.Body->accept(*this, Context);
 }
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
