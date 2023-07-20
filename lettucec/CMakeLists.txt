@@ -1,4 +1,4 @@
-# set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+set(CMAKE_CXX_CLANG_TIDY clang-tidy)
 
 add_executable(lettucec
         lettucec.cpp # main file for letttucec
@@ -26,10 +26,10 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
 # General Build flags 
 target_compile_options(lettucec PRIVATE
         -Wall
+        -Werror
         -Wpedantic
         -Wextra
         -fPIE
-        -fno-rtti
         )
 
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)

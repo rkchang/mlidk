@@ -38,12 +38,18 @@ int main(int argc, char *argv[]) {
   auto Lexr = Lexer(Source, Filename);
   auto Parsr = Parser(Lexr);
   auto AST = Parsr.parse();
+
+  // Print out the AST
   auto Printer = ASTPrinter();
   AST->accept(Printer, 0);
+
+  // Generate MLIR
   mlir::MLIRContext Context;
   Context.getOrLoadDialect<mlir::romaine::RomaineDialect>();
   auto MLIRGenerator = MLIRGen(Context);
   AST->accept(MLIRGenerator, 0);
   mlir::OwningOpRef<mlir::ModuleOp> Module = MLIRGenerator.Module;
+
+  // Print out the MLIR
   Module->dump();
 }

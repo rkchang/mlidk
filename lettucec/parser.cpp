@@ -14,7 +14,7 @@ auto Parser::parse() -> std::unique_ptr<Expr> { return expression(); }
 
 auto Parser::expression() -> std::unique_ptr<Expr> {
   if (auto LetOpt = match({TokenTag::LET})) {
-    Location Loc = {LetOpt->Filename, LetOpt->Line, LetOpt->Column};
+    const Location Loc = {LetOpt->Filename, LetOpt->Line, LetOpt->Column};
     auto V = match({TokenTag::IDENT});
     if (!V) {
       throw Error(Lex.peek());
@@ -37,7 +37,7 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
 auto Parser::term() -> std::unique_ptr<Expr> {
   auto LeftExpr = factor();
   while (auto V = match({TokenTag::PLUS, TokenTag::MINUS})) {
-    Location Loc = {V->Filename, V->Line, V->Column};
+    const Location Loc = {V->Filename, V->Line, V->Column};
     auto Op = V->Tag;
     auto RightExpr = factor();
     LeftExpr = std::make_unique<BinaryExpr>(
@@ -49,7 +49,7 @@ auto Parser::term() -> std::unique_ptr<Expr> {
 auto Parser::factor() -> std::unique_ptr<Expr> {
   auto LeftExpr = primary();
   while (auto V = match({TokenTag::STAR, TokenTag::SLASH})) {
-    Location Loc = {V->Filename, V->Line, V->Column};
+    const Location Loc = {V->Filename, V->Line, V->Column};
     auto Op = V->Tag;
     auto RightExpr = primary();
     LeftExpr = std::make_unique<BinaryExpr>(
@@ -68,11 +68,11 @@ auto Parser::primary() -> std::unique_ptr<Expr> {
   }
   if (auto V = match({TokenTag::INT})) {
     auto Num = std::stoi(V->Value);
-    Location Loc = {V->Filename, V->Line, V->Column};
+    const Location Loc = {V->Filename, V->Line, V->Column};
     return std::make_unique<IntExpr>(Loc, Num);
   }
   if (auto V = match({TokenTag::IDENT})) {
-    Location Loc = {V->Filename, V->Line, V->Column};
+    const Location Loc = {V->Filename, V->Line, V->Column};
     return std::make_unique<VarExpr>(Loc, V->Value);
   }
   throw Error(Lex.peek());

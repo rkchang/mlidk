@@ -17,7 +17,7 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
                                    Loc.Column);
 }
 auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
-  llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> Scope(SymbolTable);
+  const llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> Scope(SymbolTable);
   auto V = Node.Value->accept(*this, Context);
   auto Value = std::any_cast<mlir::Value>(V);
   SymbolTable.insert(Node.Name, Value);
@@ -35,6 +35,14 @@ auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   case TokenOp::OpType::MUL:
     return static_cast<mlir::Value>(
         Buildr.create<mlir::romaine::MulOp>(loc(Node.Loc), DataType, Lhs, Rhs));
+    break;
+  case TokenOp::OpType::MINUS:
+    return static_cast<mlir::Value>(
+        Buildr.create<mlir::romaine::SubOp>(loc(Node.Loc), DataType, Lhs, Rhs));
+    break;
+  case TokenOp::OpType::DIV:
+    return static_cast<mlir::Value>(
+        Buildr.create<mlir::romaine::DivOp>(loc(Node.Loc), DataType, Lhs, Rhs));
     break;
   }
   throw Error(Node.Loc, "Unknown binary operator");

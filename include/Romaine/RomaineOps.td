@@ -6,10 +6,7 @@
 #define ROMAINE_OPS
 
 include "mlir/IR/OpBase.td"
-include "mlir/IR/FunctionInterfaces.td"
-include "mlir/IR/SymbolInterfaces.td"
 include "Romaine/RomaineDialect.td"
-include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 def Romaine_ConstantOp : Romaine_Op<"const", [Pure]> {
@@ -20,16 +17,12 @@ def Romaine_ConstantOp : Romaine_Op<"const", [Pure]> {
 
     let arguments = (ins I32Attr:$value);
     let results = (outs I32:$res);
-      let builders = [
-        // Build a constant with a given constant floating-point value.
-        OpBuilder<(ins "int":$value)>
-      ];
 }
 
 def Romaine_AddOp : Romaine_Op<"add", [Pure]> {
-    let summary = "Illustrates how to define an operation.";
+    let summary = "Add two numbers";
     let description = [{
-        The `romaine.foo` operation illustrates how to define a new
+        Takes two integers and returns their sum.
     }];
 
     let arguments = (ins I32:$left, I32:$right);
@@ -37,9 +30,29 @@ def Romaine_AddOp : Romaine_Op<"add", [Pure]> {
 }
 
 def Romaine_MulOp : Romaine_Op<"mul", [Pure]> {
-    let summary = "Illustrates how to define an operation.";
+    let summary = "Multiply two numbers";
     let description = [{
-        The `romaine.foo` operation illustrates how to define a new
+        Takes two integers and returns their product.
+    }];
+
+    let arguments = (ins I32:$left, I32:$right);
+    let results = (outs I32:$res);
+}
+
+def Romaine_SubOp : Romaine_Op<"sub", [Pure]> {
+    let summary = "Subtract two numbers";
+    let description = [{
+        Takes two integers and returns their difference.
+    }];
+
+    let arguments = (ins I32:$left, I32:$right);
+    let results = (outs I32:$res);
+}
+
+def Romaine_DivOp : Romaine_Op<"div", [Pure]> {
+    let summary = "Divide two numbers";
+    let description = [{
+        Takes two integers and returns their quotient.
     }];
 
     let arguments = (ins I32:$left, I32:$right);
