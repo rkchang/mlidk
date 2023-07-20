@@ -25,24 +25,27 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
-  auto lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
-  auto rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
-  auto dataType = Buildr.getI32Type(); // TODO: get type from lhs?
-  switch(Node.Operator) {
+  auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
+  auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
+  auto DataType = Buildr.getI32Type(); // TODO: get type from lhs?
+  switch (Node.Operator) {
   case TokenOp::OpType::ADD:
-    return static_cast<mlir::Value>(Buildr.create<mlir::romaine::AddOp>(loc(Node.Loc), dataType, lhs, rhs));
+    return static_cast<mlir::Value>(
+        Buildr.create<mlir::romaine::AddOp>(loc(Node.Loc), DataType, Lhs, Rhs));
     break;
   case TokenOp::OpType::MUL:
-    return static_cast<mlir::Value>(Buildr.create<mlir::romaine::MulOp>(loc(Node.Loc), dataType, lhs, rhs));
+    return static_cast<mlir::Value>(
+        Buildr.create<mlir::romaine::MulOp>(loc(Node.Loc), DataType, Lhs, Rhs));
     break;
   }
   throw Error(Node.Loc, "Unknown binary operator");
 }
 auto MLIRGen::visit(const IntExpr &Node, std::any) -> std::any {
-  auto dataType = Buildr.getI32Type();
-  auto dataAttribute = Buildr.getI32IntegerAttr(Node.Value);
-  auto op = Buildr.create<mlir::romaine::ConstantOp>(loc(Node.Loc), dataType, dataAttribute);
-  return static_cast<mlir::Value>(op);
+  auto DataType = Buildr.getI32Type();
+  auto DataAttribute = Buildr.getI32IntegerAttr(Node.Value);
+  auto Op = Buildr.create<mlir::romaine::ConstantOp>(loc(Node.Loc), DataType,
+                                                     DataAttribute);
+  return static_cast<mlir::Value>(Op);
 }
 auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
   if (auto Variable = SymbolTable.lookup(Node.Name)) {
