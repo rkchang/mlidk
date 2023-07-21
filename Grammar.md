@@ -5,11 +5,17 @@ prog ::= expr
 
 expr ::= 'let' name '=' expr 'in' expr
        | 'if' expr 'then' expr 'else' expr
-       | term
+       | logic
+
+logic ::= equality ( ( 'and' | 'or' ) equality )*
+
+equality ::= comparisson ( ( '==' | '!=' ) comparisson )*
+
+comparisson ::= term ( ( '<' | '<=' | '>' | '>=' ) term )*
 
 term ::= factor ( ( '+' | '-' ) factor )*
 
-factor ::= primary ( ( '*' | '/' ) primary )*
+factor ::= primary ( ( '*' | '/' | 'not' ) primary )*
 
 primary ::= '(' expr ')' | int | name | bool
 
