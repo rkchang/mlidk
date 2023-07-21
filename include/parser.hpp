@@ -28,5 +28,9 @@ private:
   auto expect(std::initializer_list<TokenTag> Tags) -> Token;
   auto check(TokenTag Tag) -> bool;
 
+  // Helpers
+  auto letExpression(Token StartToken) -> std::unique_ptr<Expr>;
+  auto ifExpression(Token StartToken) -> std::unique_ptr<Expr>;
+
   Lexer &Lex;
 };
