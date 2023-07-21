@@ -1,4 +1,5 @@
 #include "AST.hpp"
+#include "AST.fwd.hpp"
 #include <cassert>
 
 LetExpr::LetExpr(Location Loc, std::string Name, std::unique_ptr<Expr> Value,
@@ -9,6 +10,20 @@ LetExpr::LetExpr(Location Loc, std::string Name, std::unique_ptr<Expr> Value,
 }
 
 auto LetExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+  return Visitor.visit(*this, Context);
+}
+
+IfExpr::IfExpr(Location Loc, std::unique_ptr<Expr> Condition,
+               std::unique_ptr<Expr> TrueBranch,
+               std::unique_ptr<Expr> FalseBranch)
+    : Expr(Loc), Condition(std::move(Condition)),
+      TrueBranch(std::move(TrueBranch)), FalseBranch(std::move(FalseBranch)) {
+  assert(this->Condition != nullptr);
+  assert(this->TrueBranch != nullptr);
+  assert(this->FalseBranch != nullptr);
+}
+
+auto IfExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
   return Visitor.visit(*this, Context);
 }
 
@@ -28,6 +43,12 @@ auto BinaryExpr::accept(ASTVisitor &Visitor, std::any Context) const
 IntExpr::IntExpr(Location Loc, int Value) : Expr(Loc), Value(Value) {}
 
 auto IntExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+  return Visitor.visit(*this, Context);
+}
+
+BoolExpr::BoolExpr(Location Loc, bool Value) : Expr(Loc), Value(Value) {}
+
+auto BoolExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
   return Visitor.visit(*this, Context);
 }
 

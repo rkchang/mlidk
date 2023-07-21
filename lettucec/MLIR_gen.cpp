@@ -1,6 +1,8 @@
 #include "MLIR_gen.hpp"
+#include "AST.fwd.hpp"
 #include "Romaine/RomaineOps.h"
 #include "lexer.hpp"
+#include <cstddef>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
     : std::runtime_error(Loc.Filename + ":" + std::to_string(Loc.Line) + ":" +
@@ -17,12 +19,14 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
                                    Loc.Column);
 }
 auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
-  const llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> Scope(SymbolTable);
+  const llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> Scope(
+      SymbolTable);
   auto V = Node.Value->accept(*this, Context);
   auto Value = std::any_cast<mlir::Value>(V);
   SymbolTable.insert(Node.Name, Value);
   return Node.Body->accept(*this, Context);
 }
+auto MLIRGen::visit(const IfExpr &, std::any) -> std::any { return NULL; }
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
   auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
@@ -54,6 +58,7 @@ auto MLIRGen::visit(const IntExpr &Node, std::any) -> std::any {
                                                      DataAttribute);
   return static_cast<mlir::Value>(Op);
 }
+auto MLIRGen::visit(const BoolExpr &, std::any) -> std::any { return NULL; }
 auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
   if (auto Variable = SymbolTable.lookup(Node.Name)) {
     return Variable;

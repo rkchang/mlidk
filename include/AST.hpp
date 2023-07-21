@@ -37,6 +37,17 @@ public:
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };
 
+class IfExpr : public Expr {
+public:
+  std::unique_ptr<Expr> Condition;
+  std::unique_ptr<Expr> TrueBranch;
+  std::unique_ptr<Expr> FalseBranch;
+
+  IfExpr(Location Loc, std::unique_ptr<Expr> Condition,
+         std::unique_ptr<Expr> TrueBranch, std::unique_ptr<Expr> FalseBranch);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
 class BinaryExpr : public Expr {
 public:
   std::unique_ptr<Expr> Left;
@@ -53,6 +64,14 @@ public:
   int Value;
 
   IntExpr(Location Loc, int Value);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
+class BoolExpr : public Expr {
+public:
+  bool Value;
+
+  BoolExpr(Location Loc, bool Value);
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };
 

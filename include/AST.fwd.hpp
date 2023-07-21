@@ -3,6 +3,8 @@
 // Forward declare classes to handle circular dependency between AST.hpp and
 // ASTVisitor.hpp
 class LetExpr;
+class IfExpr;
 class BinaryExpr;
 class IntExpr;
+class BoolExpr;
 class VarExpr;

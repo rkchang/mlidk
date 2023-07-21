@@ -1,3 +1,4 @@
+#include "AST.fwd.hpp"
 #include "ASTPrinter.hpp"
 #include "parser.hpp"
 #include <deque>
@@ -22,6 +23,22 @@ TEST(ParserTest, LetExpr) {
 
   auto Body = dynamic_cast<VarExpr *>(Let->Body.get());
   EXPECT_NE(Body, nullptr) << "Expected VarExpr";
+}
+
+TEST(ParserTest, IfExpr) {
+  std::string Source = "if true then x else 1";
+  auto AST = genAST(Source);
+  auto If = dynamic_cast<IfExpr *>(AST.get());
+  EXPECT_NE(If, nullptr) << "Expected IfExpr";
+
+  auto Cond = dynamic_cast<BoolExpr *>(If->Condition.get());
+  EXPECT_NE(Cond, nullptr) << "Expected BoolExpr";
+
+  auto TrueBranch = dynamic_cast<VarExpr *>(If->TrueBranch.get());
+  EXPECT_NE(TrueBranch, nullptr) << "Expected VarExpr";
+
+  auto FalseBranch = dynamic_cast<IntExpr *>(If->FalseBranch.get());
+  EXPECT_NE(FalseBranch, nullptr) << "Expected IntExpr";
 }
 
 TEST(ParserTest, Arithmetic) {
