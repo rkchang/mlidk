@@ -6,6 +6,7 @@ add_executable(lettucec
         ASTPrinter.cpp
         lexer.cpp
         parser.cpp
+        passes.cpp
         MLIR_gen.cpp
 )
 
@@ -23,7 +24,7 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
   -g"
         )
 
-# General Build flags 
+# General Build flags
 target_compile_options(lettucec PRIVATE
         -Wall
         -Werror
@@ -32,13 +33,19 @@ target_compile_options(lettucec PRIVATE
         -fPIE
         )
 
+llvm_map_components_to_libnames(llvm_libs support core irreader orcjit nativecodegen)
+
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
 set(LIBS
         ${dialect_libs}
         ${conversion_libs}
+        ${llvm_libs}
         MLIRArithDialect
         MLIROptLib
+        MLIRLLVMCommonConversion
+        MLIRLLVMDialect
+        MLIRLLVMToLLVMIRTranslation
         )
 
 
