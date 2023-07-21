@@ -15,7 +15,9 @@ comparisson ::= term ( ( '<' | '<=' | '>' | '>=' ) term )*
 
 term ::= factor ( ( '+' | '-' ) factor )*
 
-factor ::= primary ( ( '*' | '/' | 'not' ) primary )*
+factor ::= unary ( ( '*' | '/' ) unary )*
+
+unary ::= [ 'not' ] primary
 
 primary ::= '(' expr ')' | int | name | bool
 
