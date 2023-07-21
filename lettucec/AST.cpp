@@ -40,6 +40,17 @@ auto BinaryExpr::accept(ASTVisitor &Visitor, std::any Context) const
   return Visitor.visit(*this, Context);
 }
 
+UnaryExpr::UnaryExpr(Location Loc, TokenOp::OpType Operator,
+                     std::unique_ptr<Expr> Right)
+    : Expr(Loc), Operator(Operator), Right(std::move(Right)) {
+  assert(this->Right != nullptr);
+}
+
+auto UnaryExpr::accept(ASTVisitor &Visitor, std::any Context) const
+    -> std::any {
+  return Visitor.visit(*this, Context);
+}
+
 IntExpr::IntExpr(Location Loc, int Value) : Expr(Loc), Value(Value) {}
 
 auto IntExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {

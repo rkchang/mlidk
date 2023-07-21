@@ -47,6 +47,15 @@ auto ASTPrinter::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 
+auto ASTPrinter::visit(const UnaryExpr &Node, std::any Context) -> std::any {
+  std::cout << GetPrefix(Context) << "UnaryExpr: "
+            << ".Operator="
+            << " " << TokenOp::OpToStr(Node.Operator) << "\n";
+  auto NewContext = IncrContext(Context);
+  Node.Right->accept(*this, NewContext);
+  return NULL;
+}
+
 auto ASTPrinter::visit(const IntExpr &Node, std::any Context) -> std::any {
   std::cout << GetPrefix(Context) << "IntExpr:"
             << " " << Node.Value << "\n";

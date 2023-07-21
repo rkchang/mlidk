@@ -5,6 +5,7 @@
 class LetExpr;
 class IfExpr;
 class BinaryExpr;
+class UnaryExpr;
 class IntExpr;
 class BoolExpr;
 class VarExpr;

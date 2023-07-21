@@ -59,6 +59,16 @@ public:
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };
 
+class UnaryExpr : public Expr {
+public:
+  TokenOp::OpType Operator;
+  std::unique_ptr<Expr> Right;
+
+  UnaryExpr(Location Loc, TokenOp::OpType Operator,
+            std::unique_ptr<Expr> Right);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
 class IntExpr : public Expr {
 public:
   int Value;
