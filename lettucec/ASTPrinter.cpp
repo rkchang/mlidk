@@ -63,8 +63,9 @@ auto ASTPrinter::visit(const IntExpr &Node, std::any Context) -> std::any {
 }
 
 auto ASTPrinter::visit(const BoolExpr &Node, std::any Context) -> std::any {
+  const auto *Value = Node.Value ? "true" : "false";
   std::cout << GetPrefix(Context) << "BoolExpr:"
-            << " " << Node.Value << "\n";
+            << " " << Value << "\n";
   return NULL;
 }
 
