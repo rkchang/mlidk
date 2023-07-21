@@ -1,15 +1,15 @@
 #include "ASTPrinter.hpp"
-#include "lexer.hpp"
-#include "parser.hpp"
-#include <fstream>
-#include <iostream>
-#include <sstream>
-
 #include "MLIR_gen.hpp"
-#include "Romaine/RomaineDialect.h"
-#include "Romaine/RomaineOps.h"
+#include "lexer.hpp"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/OwningOpRef.h"
+#include "parser.hpp"
+
+#include <fstream>
+#include <iostream>
+#include <mlir/Dialect/Arith/IR/Arith.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <sstream>
 
 std::optional<std::string> readFile(const std::string &Filename) {
   const std::ifstream IFS(Filename);
@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
   }
   auto Source = *V;
 
+  std::cout << Source << std::endl;
+
   auto Lexr = Lexer(Source, Filename);
   auto Parsr = Parser(Lexr);
   auto AST = Parsr.parse();
@@ -45,7 +47,8 @@ int main(int argc, char *argv[]) {
 
   // Generate MLIR
   mlir::MLIRContext Context;
-  Context.getOrLoadDialect<mlir::romaine::RomaineDialect>();
+  Context.getOrLoadDialect<mlir::arith::ArithDialect>();
+  Context.getOrLoadDialect<mlir::func::FuncDialect>();
   auto MLIRGenerator = MLIRGen(Context);
   AST->accept(MLIRGenerator, 0);
   mlir::OwningOpRef<mlir::ModuleOp> Module = MLIRGenerator.Module;
