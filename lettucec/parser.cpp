@@ -1,4 +1,8 @@
 #include "parser.hpp"
+#include "AST.fwd.hpp"
+#include "AST.hpp"
+#include "lexer.hpp"
+#include <cstddef>
 #include <memory>
 // TODO: EOI?
 
@@ -10,33 +14,61 @@ Parser::Error::Error(Token Found)
 
 Parser::Parser(Lexer &Lex) : Lex(Lex) {}
 
-auto Parser::parse() -> std::unique_ptr<Expr> { return expression(); }
+auto Parser::parse() -> std::unique_ptr<RootNode> {
+  auto Exp = expression();
+  return std::make_unique<RootNode>(Exp->Loc, std::move(Exp));
+}
 
 auto Parser::expression() -> std::unique_ptr<Expr> {
-  if (auto LetOpt = match({TokenTag::LET})) {
-    const Location Loc = {LetOpt->Filename, LetOpt->Line, LetOpt->Column};
-    auto V = match({TokenTag::IDENT});
-    if (!V) {
-      throw Error(Lex.peek());
-    }
-    auto Name = V->Value;
-    if (!match({TokenTag::EQUAL})) {
-      throw Error(Lex.peek());
-    }
-    auto EqExpr = expression();
-    if (!match({TokenTag::IN})) {
-      throw Error(Lex.peek());
-    }
-    auto InExpr = expression();
-    return std::make_unique<LetExpr>(Loc, Name, std::move(EqExpr),
-                                     std::move(InExpr));
+  if (auto LetOpt = accept({TokenTag::LET})) {
+    return letExpression(LetOpt.value());
   }
-  return term();
+  if (auto IfOpt = accept({TokenTag::IF})) {
+    return ifExpression(IfOpt.value());
+  }
+  return logic();
+}
+
+auto Parser::logic() -> std::unique_ptr<Expr> {
+  auto Left = equality();
+  while (auto V = accept({TokenTag::AND, TokenTag::OR})) {
+    const Location Loc = {V->Filename, V->Line, V->Column};
+    auto Operator = TokenOp::TagToOp(V->Tag);
+    auto Right = equality();
+    Left = std::make_unique<BinaryExpr>(Loc, std::move(Left), Operator,
+                                        std::move(Right));
+  }
+  return Left;
+}
+
+auto Parser::equality() -> std::unique_ptr<Expr> {
+  auto Left = comparisson();
+  while (auto V = accept({TokenTag::EQUAL_EQUAL, TokenTag::BANG_EQUAL})) {
+    const Location Loc = {V->Filename, V->Line, V->Column};
+    auto Operator = TokenOp::TagToOp(V->Tag);
+    auto Right = comparisson();
+    Left = std::make_unique<BinaryExpr>(Loc, std::move(Left), Operator,
+                                        std::move(Right));
+  }
+  return Left;
+}
+
+auto Parser::comparisson() -> std::unique_ptr<Expr> {
+  auto Left = term();
+  while (auto V = accept({TokenTag::LESS, TokenTag::LESS_EQUAL,
+                          TokenTag::GREATER, TokenTag::GREATER_EQUAL})) {
+    const Location Loc = {V->Filename, V->Line, V->Column};
+    auto Operator = TokenOp::TagToOp(V->Tag);
+    auto Right = term();
+    Left = std::make_unique<BinaryExpr>(Loc, std::move(Left), Operator,
+                                        std::move(Right));
+  }
+  return Left;
 }
 
 auto Parser::term() -> std::unique_ptr<Expr> {
   auto LeftExpr = factor();
-  while (auto V = match({TokenTag::PLUS, TokenTag::MINUS})) {
+  while (auto V = accept({TokenTag::PLUS, TokenTag::MINUS})) {
     const Location Loc = {V->Filename, V->Line, V->Column};
     auto Op = V->Tag;
     auto RightExpr = factor();
@@ -47,38 +79,79 @@ auto Parser::term() -> std::unique_ptr<Expr> {
 }
 
 auto Parser::factor() -> std::unique_ptr<Expr> {
-  auto LeftExpr = primary();
-  while (auto V = match({TokenTag::STAR, TokenTag::SLASH})) {
+  auto LeftExpr = unary();
+  while (auto V = accept({TokenTag::STAR, TokenTag::SLASH})) {
     const Location Loc = {V->Filename, V->Line, V->Column};
     auto Op = V->Tag;
-    auto RightExpr = primary();
+    auto RightExpr = unary();
     LeftExpr = std::make_unique<BinaryExpr>(
         Loc, std::move(LeftExpr), TokenOp::TagToOp(Op), std::move(RightExpr));
   }
   return LeftExpr;
 }
 
+auto Parser::unary() -> std::unique_ptr<Expr> {
+  if (auto V = accept({TokenTag::NOT})) {
+    const Location Loc = {V->Filename, V->Line, V->Column};
+    auto Right = primary();
+    return std::make_unique<UnaryExpr>(Loc, TokenOp::TagToOp(TokenTag::NOT),
+                                       std::move(Right));
+  }
+  return primary();
+}
+
 auto Parser::primary() -> std::unique_ptr<Expr> {
-  if (match({TokenTag::LPAREN})) {
+  if (accept({TokenTag::LPAREN})) {
     auto ParenExpr = expression();
-    if (!match({TokenTag::RPAREN})) {
-      throw Error(Lex.peek());
-    }
+    expect({TokenTag::RPAREN});
     return ParenExpr;
   }
-  if (auto V = match({TokenTag::INT})) {
-    auto Num = std::stoi(V->Value);
+  if (auto V = accept({TokenTag::INT})) {
+    auto Value = std::stoi(V->Value);
     const Location Loc = {V->Filename, V->Line, V->Column};
-    return std::make_unique<IntExpr>(Loc, Num);
+    return std::make_unique<IntExpr>(Loc, Value);
   }
-  if (auto V = match({TokenTag::IDENT})) {
+  if (auto V = accept({TokenTag::BOOL})) {
+    auto Value = V->Value == "true";
+    const Location Loc = {V->Filename, V->Line, V->Column};
+    return std::make_unique<BoolExpr>(Loc, Value);
+  }
+  if (auto V = accept({TokenTag::IDENT})) {
     const Location Loc = {V->Filename, V->Line, V->Column};
     return std::make_unique<VarExpr>(Loc, V->Value);
   }
   throw Error(Lex.peek());
 }
 
-auto Parser::match(std::initializer_list<TokenTag> Tags)
+// expression helpers
+
+auto Parser::letExpression(Token StartToken) -> std::unique_ptr<Expr> {
+  const Location Loc = {StartToken.Filename, StartToken.Line,
+                        StartToken.Column};
+  auto Name = expect({TokenTag::IDENT}).Value;
+  expect({TokenTag::EQUAL});
+  auto EqExpr = expression();
+  expect({TokenTag::IN});
+  auto InExpr = expression();
+  return std::make_unique<LetExpr>(Loc, Name, std::move(EqExpr),
+                                   std::move(InExpr));
+}
+
+auto Parser::ifExpression(Token StartToken) -> std::unique_ptr<Expr> {
+  const Location Loc = {StartToken.Filename, StartToken.Line,
+                        StartToken.Column};
+  auto Condition = expression();
+  expect({TokenTag::THEN});
+  auto EqExpr = expression();
+  expect({TokenTag::ELSE});
+  auto InExpr = expression();
+  return std::make_unique<IfExpr>(Loc, std::move(Condition), std::move(EqExpr),
+                                  std::move(InExpr));
+}
+
+//
+
+auto Parser::accept(std::initializer_list<TokenTag> Tags)
     -> std::optional<Token> {
   for (const auto &Tag : Tags) {
     if (check(Tag)) {
@@ -86,6 +159,14 @@ auto Parser::match(std::initializer_list<TokenTag> Tags)
     }
   }
   return std::nullopt;
+}
+
+auto Parser::expect(std::initializer_list<TokenTag> Tags) -> Token {
+  auto Found = accept(Tags);
+  if (!Found) {
+    throw Error(Lex.peek());
+  }
+  return Found.value();
 }
 
 auto Parser::check(TokenTag Tag) -> bool {

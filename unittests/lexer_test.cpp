@@ -28,6 +28,20 @@ TEST(LexerTest, LexInt) {
   EXPECT_EQ(Tok.Value, "123");
 }
 
+TEST(LexerTest, LexTrue) {
+  Lexer Lexer("true", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::BOOL);
+  EXPECT_EQ(Tok.Value, "true");
+}
+
+TEST(LexerTest, LexFalse) {
+  Lexer Lexer("false", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::BOOL);
+  EXPECT_EQ(Tok.Value, "false");
+}
+
 TEST(LexerTest, LexIdent) {
   Lexer Lexer("abc", "hello.cpp");
   Token Tok = Lexer.token();
@@ -56,6 +70,27 @@ TEST(LexerTest, LexIn) {
   EXPECT_EQ(Tok.Value, "in");
 }
 
+TEST(LexerTest, LexIf) {
+  Lexer Lexer("if", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::IF);
+  EXPECT_EQ(Tok.Value, "if");
+}
+
+TEST(LexerTest, LexThen) {
+  Lexer Lexer("then", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::THEN);
+  EXPECT_EQ(Tok.Value, "then");
+}
+
+TEST(LexerTest, LexElse) {
+  Lexer Lexer("else", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::ELSE);
+  EXPECT_EQ(Tok.Value, "else");
+}
+
 TEST(LexerTest, LexPlus) {
   Lexer Lexer("+", "hello.cpp");
   Token Tok = Lexer.token();
@@ -82,6 +117,69 @@ TEST(LexerTest, LexSlash) {
   Token Tok = Lexer.token();
   EXPECT_EQ(Tok.Tag, TokenTag::SLASH);
   EXPECT_EQ(Tok.Value, "/");
+}
+
+TEST(LexerTest, LexEqualEqual) {
+  Lexer Lexer("==", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::EQUAL_EQUAL);
+  EXPECT_EQ(Tok.Value, "==");
+}
+
+TEST(LexerTest, LexBangEqual) {
+  Lexer Lexer("!=", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::BANG_EQUAL);
+  EXPECT_EQ(Tok.Value, "!=");
+}
+
+TEST(LexerTest, LexLess) {
+  Lexer Lexer("<", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::LESS);
+  EXPECT_EQ(Tok.Value, "<");
+}
+
+TEST(LexerTest, LexLessEqual) {
+  Lexer Lexer("<=", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::LESS_EQUAL);
+  EXPECT_EQ(Tok.Value, "<=");
+}
+
+TEST(LexerTest, LexGreater) {
+  Lexer Lexer(">", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::GREATER);
+  EXPECT_EQ(Tok.Value, ">");
+}
+
+TEST(LexerTest, LexGreaterEqual) {
+  Lexer Lexer(">=", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::GREATER_EQUAL);
+  EXPECT_EQ(Tok.Value, ">=");
+}
+
+TEST(LexerTest, LexAnd) {
+  Lexer Lexer("and", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::AND);
+  EXPECT_EQ(Tok.Value, "and");
+}
+
+TEST(LexerTest, LexOr) {
+  Lexer Lexer("or", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::OR);
+  EXPECT_EQ(Tok.Value, "or");
+}
+
+TEST(LexerTest, LexNot) {
+  Lexer Lexer("not", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::NOT);
+  EXPECT_EQ(Tok.Value, "not");
 }
 
 TEST(LexerTest, LexMany) {

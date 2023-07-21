@@ -17,9 +17,15 @@ public:
   };
 
   MLIRGen(mlir::MLIRContext &Context);
+
+  auto visit(const RootNode &Node, std::any Context) -> std::any override;
+
   auto visit(const LetExpr &Node, std::any Context) -> std::any override;
+  auto visit(const IfExpr &Node, std::any Context) -> std::any override;
   auto visit(const BinaryExpr &Node, std::any Context) -> std::any override;
+  auto visit(const UnaryExpr &Node, std::any Context) -> std::any override;
   auto visit(const IntExpr &Node, std::any Context) -> std::any override;
+  auto visit(const BoolExpr &Node, std::any Context) -> std::any override;
   auto visit(const VarExpr &Node, std::any Context) -> std::any override;
   auto loc(const Location &Loc) -> mlir::Location;
 

@@ -1,5 +1,6 @@
-#include <format>
 #include <lexer.hpp>
+
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -9,23 +10,37 @@ auto TokenOp::TagToOp(TokenTag Tag) -> OpType {
       {TokenTag::MINUS, OpType::MINUS},
       {TokenTag::STAR, OpType::MUL},
       {TokenTag::SLASH, OpType::DIV},
+      {TokenTag::EQUAL_EQUAL, OpType::EQ},
+      {TokenTag::BANG_EQUAL, OpType::NE},
+      {TokenTag::LESS, OpType::LT},
+      {TokenTag::LESS_EQUAL, OpType::LE},
+      {TokenTag::GREATER, OpType::GT},
+      {TokenTag::GREATER_EQUAL, OpType::GE},
+      {TokenTag::AND, OpType::AND},
+      {TokenTag::OR, OpType::OR},
+      {TokenTag::NOT, OpType::NOT},
   };
   return Map[Tag];
 }
 
 auto TokenOp::OpToStr(OpType Op) -> std::string {
   std::unordered_map<OpType, std::string> Map{
-      {OpType::ADD, "+"},
-      {OpType::MINUS, "-"},
-      {OpType::MUL, "*"},
-      {OpType::DIV, "/"},
+      {OpType::ADD, "+"},   {OpType::MINUS, "-"}, {OpType::MUL, "*"},
+      {OpType::DIV, "/"},   {OpType::EQ, "=="},   {OpType::NE, "!="},
+      {OpType::LT, "<"},    {OpType::LE, "<="},   {OpType::GT, ">"},
+      {OpType::GE, ">="},   {OpType::AND, "and"}, {OpType::OR, "or"},
+      {OpType::NOT, "not"},
   };
   return Map[Op];
 }
 
 // All keywords in language
 const std::unordered_map<std::string, TokenTag> KeyWords = {
-    {"let", TokenTag::LET}, {"in", TokenTag::IN}};
+    {"let", TokenTag::LET},    {"in", TokenTag::IN},
+    {"if", TokenTag::IF},      {"then", TokenTag::THEN},
+    {"else", TokenTag::ELSE},  {"true", TokenTag::BOOL},
+    {"false", TokenTag::BOOL}, {"and", TokenTag::AND},
+    {"or", TokenTag::OR},      {"not", TokenTag::NOT}};
 
 //------------
 // LexerError
@@ -81,9 +96,45 @@ auto Lexer::token() -> Token {
   case '/':
     step();
     return Token{TokenTag::SLASH, "/", Filename, StartLine, StartCol};
-  case '=':
+  case '=': {
     step();
+    auto V = lookahead(0);
+    if (V.value_or('\0') == '=') {
+      step();
+      return Token{TokenTag::EQUAL_EQUAL, "==", Filename, StartLine, StartCol};
+    }
     return Token{TokenTag::EQUAL, "=", Filename, StartLine, StartCol};
+  }
+  case '<': {
+    step();
+    auto V = lookahead(0);
+    if (V.value_or('\0') == '=') {
+      step();
+      return Token{TokenTag::LESS_EQUAL, "<=", Filename, StartLine, StartCol};
+    }
+    return Token{TokenTag::LESS, "<", Filename, StartLine, StartCol};
+  }
+  case '>': {
+    step();
+    auto V = lookahead(0);
+    if (V.value_or('\0') == '=') {
+      step();
+      return Token{TokenTag::GREATER_EQUAL, ">=", Filename, StartLine,
+                   StartCol};
+    }
+    return Token{TokenTag::GREATER, ">", Filename, StartLine, StartCol};
+  }
+  case '!': {
+    // peek past '!' to next character
+    auto V = lookahead(1);
+    if (V.value_or('\0') == '=') {
+      step();
+      step();
+      return Token{TokenTag::BANG_EQUAL, "!=", Filename, StartLine, StartCol};
+    }
+    // '!' is not a recognized token
+    throw InvalidToken(Line, Column, Filename);
+  }
   case '(':
     step();
     return Token{TokenTag::LPAREN, "(", Filename, StartLine, StartCol};
@@ -123,6 +174,13 @@ auto Lexer::peek() -> Token {
 }
 
 auto Lexer::isDone() -> bool { return Index >= Size; }
+
+auto Lexer::lookahead(int N) -> std::optional<char> {
+  if (Index + N >= Size) {
+    return std::nullopt;
+  }
+  return std::make_optional(Source[Index + N]);
+}
 
 auto Lexer::step() -> char {
   // TODO: Check for out of range

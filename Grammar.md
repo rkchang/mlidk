@@ -4,14 +4,24 @@
 prog ::= expr
 
 expr ::= 'let' name '=' expr 'in' expr
-         | term
+       | 'if' expr 'then' expr 'else' expr
+       | logic
+
+logic ::= equality ( ( 'and' | 'or' ) equality )*
+
+equality ::= comparisson ( ( '==' | '!=' ) comparisson )*
+
+comparisson ::= term ( ( '<' | '<=' | '>' | '>=' ) term )*
 
 term ::= factor ( ( '+' | '-' ) factor )*
 
-factor ::= primary ( ( '*' | '/' ) primary )*
+factor ::= unary ( ( '*' | '/' ) unary )*
 
-primary ::= '(' expr ')' | int | name
+unary ::= [ 'not' ] primary
 
+primary ::= '(' expr ')' | int | name | bool
+
+bool ::= 'true' | 'false'
 int  ::= [0-9]+
 name ::= [a-z][a-zA-Z0-9_]*
 ```
