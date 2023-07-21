@@ -11,13 +11,19 @@ enum class TokenTag {
   STAR,
   SLASH,
   // Not operators
-  INT,
-  IDENT,
-  LET,
-  IN,
   EQUAL,
   LPAREN,
   RPAREN,
+  // Keywords
+  LET,
+  IN,
+  IF,
+  THEN,
+  ELSE,
+  // Identifiers and literals
+  INT,
+  IDENT,
+  BOOL,
   EOI, // Might not be present
 };
 

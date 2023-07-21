@@ -28,6 +28,20 @@ TEST(LexerTest, LexInt) {
   EXPECT_EQ(Tok.Value, "123");
 }
 
+TEST(LexerTest, LexTrue) {
+  Lexer Lexer("true", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::BOOL);
+  EXPECT_EQ(Tok.Value, "true");
+}
+
+TEST(LexerTest, LexFalse) {
+  Lexer Lexer("false", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::BOOL);
+  EXPECT_EQ(Tok.Value, "false");
+}
+
 TEST(LexerTest, LexIdent) {
   Lexer Lexer("abc", "hello.cpp");
   Token Tok = Lexer.token();
@@ -54,6 +68,27 @@ TEST(LexerTest, LexIn) {
   Token Tok = Lexer.token();
   EXPECT_EQ(Tok.Tag, TokenTag::IN);
   EXPECT_EQ(Tok.Value, "in");
+}
+
+TEST(LexerTest, LexIf) {
+  Lexer Lexer("if", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::IF);
+  EXPECT_EQ(Tok.Value, "if");
+}
+
+TEST(LexerTest, LexThen) {
+  Lexer Lexer("then", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::THEN);
+  EXPECT_EQ(Tok.Value, "then");
+}
+
+TEST(LexerTest, LexElse) {
+  Lexer Lexer("else", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::ELSE);
+  EXPECT_EQ(Tok.Value, "else");
 }
 
 TEST(LexerTest, LexPlus) {
