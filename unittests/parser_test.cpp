@@ -10,7 +10,7 @@ auto genAST(std::string Source) -> std::unique_ptr<Expr> {
   auto Lexr = Lexer(Source, "GTEST");
   auto Parsr = Parser(Lexr);
   auto AST = Parsr.parse();
-  return AST;
+  return std::move(AST->Exp);
 }
 
 TEST(ParserTest, LetExpr) {

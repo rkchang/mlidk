@@ -1,5 +1,6 @@
-#include <format>
 #include <lexer.hpp>
+
+#include <format>
 #include <optional>
 #include <string>
 #include <unordered_map>

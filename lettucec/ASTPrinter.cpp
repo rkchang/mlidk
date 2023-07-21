@@ -18,6 +18,14 @@ auto ASTPrinter::IncrContext(std::any Context) -> int {
   return std::any_cast<int>(Context) + 2;
 }
 
+auto ASTPrinter::visit(const RootNode &Node, std::any Context) -> std::any {
+  std::cout << GetPrefix(Context) << "RootNode:"
+            << "\n";
+  auto NewContext = IncrContext(Context);
+  Node.Exp->accept(*this, NewContext);
+  return NULL;
+}
+
 auto ASTPrinter::visit(const LetExpr &Node, std::any Context) -> std::any {
   std::cout << GetPrefix(Context) << "LetExpr: "
             << ".Name=" << Node.Name << "\n";

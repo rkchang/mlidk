@@ -4,7 +4,6 @@
 #include "lexer.hpp"
 #include <cstddef>
 #include <memory>
-#include <utility>
 // TODO: EOI?
 
 Parser::Error::Error(Token Found)
@@ -15,7 +14,10 @@ Parser::Error::Error(Token Found)
 
 Parser::Parser(Lexer &Lex) : Lex(Lex) {}
 
-auto Parser::parse() -> std::unique_ptr<Expr> { return expression(); }
+auto Parser::parse() -> std::unique_ptr<RootNode> {
+  auto Exp = expression();
+  return std::make_unique<RootNode>(Exp->Loc, std::move(Exp));
+}
 
 auto Parser::expression() -> std::unique_ptr<Expr> {
   if (auto LetOpt = accept({TokenTag::LET})) {

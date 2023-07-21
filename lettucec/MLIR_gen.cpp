@@ -2,6 +2,8 @@
 #include "AST.fwd.hpp"
 #include "Romaine/RomaineOps.h"
 #include "lexer.hpp"
+
+#include <any>
 #include <cstddef>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
@@ -18,6 +20,10 @@ MLIRGen::MLIRGen(mlir::MLIRContext &Context) : Buildr(&Context) {
 auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
   return mlir::FileLineColLoc::get(Buildr.getStringAttr(Loc.Filename), Loc.Line,
                                    Loc.Column);
+}
+
+auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
+  return Node.Exp->accept(*this, Context);
 }
 
 auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {

@@ -1,6 +1,16 @@
 #include "AST.hpp"
 #include "AST.fwd.hpp"
+
 #include <cassert>
+
+RootNode::RootNode(Location Loc, std::unique_ptr<Expr> Exp)
+    : ASTNode(Loc), Exp(std::move(Exp)) {
+  assert(this->Exp != nullptr);
+}
+
+auto RootNode::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+  return Visitor.visit(*this, Context);
+}
 
 LetExpr::LetExpr(Location Loc, std::string Name, std::unique_ptr<Expr> Value,
                  std::unique_ptr<Expr> Body)

@@ -26,6 +26,14 @@ public:
   Expr(Location Loc) : ASTNode(Loc) {}
 };
 
+class RootNode : public ASTNode {
+public:
+  std::unique_ptr<Expr> Exp;
+
+  RootNode(Location Loc, std::unique_ptr<Expr> Exp);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
 class LetExpr : public Expr {
 public:
   std::string Name;

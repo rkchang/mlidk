@@ -15,7 +15,7 @@ class Parser {
 
 public:
   Parser(Lexer &Lex);
-  auto parse() -> std::unique_ptr<Expr>;
+  auto parse() -> std::unique_ptr<RootNode>;
 
 private:
   auto expression() -> std::unique_ptr<Expr>;

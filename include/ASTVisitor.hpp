@@ -7,6 +7,10 @@ class ASTVisitor {
 public:
   virtual ~ASTVisitor() = default;
 
+  // Root
+  virtual std::any visit(const RootNode &Node, std::any Context) = 0;
+
+  // Expressions
   virtual std::any visit(const LetExpr &Node, std::any Context) = 0;
   virtual std::any visit(const IfExpr &Node, std::any Context) = 0;
   virtual std::any visit(const BinaryExpr &Node, std::any Context) = 0;
