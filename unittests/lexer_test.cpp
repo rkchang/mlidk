@@ -119,6 +119,69 @@ TEST(LexerTest, LexSlash) {
   EXPECT_EQ(Tok.Value, "/");
 }
 
+TEST(LexerTest, LexEqualEqual) {
+  Lexer Lexer("==", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::EQUAL_EQUAL);
+  EXPECT_EQ(Tok.Value, "==");
+}
+
+TEST(LexerTest, LexBangEqual) {
+  Lexer Lexer("!=", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::BANG_EQUAL);
+  EXPECT_EQ(Tok.Value, "!=");
+}
+
+TEST(LexerTest, LexLess) {
+  Lexer Lexer("<", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::LESS);
+  EXPECT_EQ(Tok.Value, "<");
+}
+
+TEST(LexerTest, LexLessEqual) {
+  Lexer Lexer("<=", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::LESS_EQUAL);
+  EXPECT_EQ(Tok.Value, "<=");
+}
+
+TEST(LexerTest, LexGreater) {
+  Lexer Lexer(">", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::GREATER);
+  EXPECT_EQ(Tok.Value, ">");
+}
+
+TEST(LexerTest, LexGreaterEqual) {
+  Lexer Lexer(">=", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::GREATER_EQUAL);
+  EXPECT_EQ(Tok.Value, ">=");
+}
+
+TEST(LexerTest, LexAnd) {
+  Lexer Lexer("and", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::AND);
+  EXPECT_EQ(Tok.Value, "and");
+}
+
+TEST(LexerTest, LexOr) {
+  Lexer Lexer("or", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::OR);
+  EXPECT_EQ(Tok.Value, "or");
+}
+
+TEST(LexerTest, LexNot) {
+  Lexer Lexer("not", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::NOT);
+  EXPECT_EQ(Tok.Value, "not");
+}
+
 TEST(LexerTest, LexMany) {
   Lexer Lexer("1 + x", "hello.cpp");
   std::vector<Token> Tokens;

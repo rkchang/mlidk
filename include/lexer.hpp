@@ -2,6 +2,7 @@
 
 #include <exception>
 #include <functional>
+#include <optional>
 #include <string>
 
 enum class TokenTag {
@@ -10,6 +11,15 @@ enum class TokenTag {
   MINUS,
   STAR,
   SLASH,
+  EQUAL_EQUAL,
+  BANG_EQUAL,
+  LESS,
+  LESS_EQUAL,
+  GREATER,
+  GREATER_EQUAL,
+  AND,
+  OR,
+  NOT,
   // Not operators
   EQUAL,
   LPAREN,
@@ -91,6 +101,8 @@ private:
   const size_t Size;
   const std::string_view Source;
   const std::string Filename;
+
+  auto lookahead(int N) -> std::optional<char>;
 
   /**
    * Steps over a single character
