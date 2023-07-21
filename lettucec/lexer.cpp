@@ -10,16 +10,26 @@ auto TokenOp::TagToOp(TokenTag Tag) -> OpType {
       {TokenTag::MINUS, OpType::MINUS},
       {TokenTag::STAR, OpType::MUL},
       {TokenTag::SLASH, OpType::DIV},
+      {TokenTag::EQUAL_EQUAL, OpType::EQ},
+      {TokenTag::BANG_EQUAL, OpType::NE},
+      {TokenTag::LESS, OpType::LT},
+      {TokenTag::LESS_EQUAL, OpType::LE},
+      {TokenTag::GREATER, OpType::GT},
+      {TokenTag::GREATER_EQUAL, OpType::GE},
+      {TokenTag::AND, OpType::AND},
+      {TokenTag::OR, OpType::OR},
+      {TokenTag::NOT, OpType::NOT},
   };
   return Map[Tag];
 }
 
 auto TokenOp::OpToStr(OpType Op) -> std::string {
   std::unordered_map<OpType, std::string> Map{
-      {OpType::ADD, "+"},
-      {OpType::MINUS, "-"},
-      {OpType::MUL, "*"},
-      {OpType::DIV, "/"},
+      {OpType::ADD, "+"},   {OpType::MINUS, "-"}, {OpType::MUL, "*"},
+      {OpType::DIV, "/"},   {OpType::EQ, "=="},   {OpType::NE, "!="},
+      {OpType::LT, "<"},    {OpType::LE, "<="},   {OpType::GT, ">"},
+      {OpType::GE, ">="},   {OpType::AND, "and"}, {OpType::OR, "or"},
+      {OpType::NOT, "not"},
   };
   return Map[Op];
 }

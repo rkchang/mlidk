@@ -43,6 +43,15 @@ enum class OpType : char {
   MINUS,
   MUL,
   DIV,
+  EQ,
+  NE,
+  LT,
+  LE,
+  GT,
+  GE,
+  AND,
+  OR,
+  NOT
 };
 
 auto TagToOp(TokenTag) -> OpType;
