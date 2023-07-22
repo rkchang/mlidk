@@ -3,11 +3,13 @@
 #include "lexer.hpp"
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/BuiltinDialect.h"
 
 #include <any>
 #include <cstddef>
+#include <mlir/IR/Value.h>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
     : std::runtime_error(Loc.Filename + ":" + std::to_string(Loc.Line) + ":" +
@@ -36,8 +38,13 @@ auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   Buildr.setInsertionPointToStart(&Blk);
 
   auto V = Node.Exp->accept(*this, Context);
+
   auto Value = std::any_cast<mlir::Value>(V);
   Buildr.create<mlir::func::ReturnOp>(Loc, Value);
+
+  // TODO: Return type must change depending on whether int or bool expr!
+  auto Ty2 = Buildr.getFunctionType(std::nullopt, {Value.getType()});
+  Fun.setType(Ty2);
 
   return Fun;
 }
@@ -63,25 +70,76 @@ auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   case TokenOp::OpType::ADD:
     return static_cast<mlir::Value>(
         Buildr.create<mlir::arith::AddIOp>(loc(Node.Loc), DataType, Lhs, Rhs));
-    break;
   case TokenOp::OpType::MUL:
     return static_cast<mlir::Value>(
         Buildr.create<mlir::arith::MulIOp>(loc(Node.Loc), DataType, Lhs, Rhs));
-    break;
   case TokenOp::OpType::MINUS:
     return static_cast<mlir::Value>(
         Buildr.create<mlir::arith::SubIOp>(loc(Node.Loc), DataType, Lhs, Rhs));
-    break;
   case TokenOp::OpType::DIV:
     return static_cast<mlir::Value>(
         Buildr.create<mlir::arith::DivSIOp>(loc(Node.Loc), DataType, Lhs, Rhs));
-    break;
+  case TokenOp::OpType::EQ:
+    return static_cast<mlir::Value>(Buildr.create<mlir::arith::CmpIOp>(
+        loc(Node.Loc), mlir::arith::CmpIPredicate::eq, Lhs, Rhs));
+  case TokenOp::OpType::NE:
+    return static_cast<mlir::Value>(Buildr.create<mlir::arith::CmpIOp>(
+        loc(Node.Loc), mlir::arith::CmpIPredicate::ne, Lhs, Rhs));
+  case TokenOp::OpType::LT:
+    return static_cast<mlir::Value>(Buildr.create<mlir::arith::CmpIOp>(
+        loc(Node.Loc), mlir::arith::CmpIPredicate::slt, Lhs, Rhs));
+  case TokenOp::OpType::LE:
+    return static_cast<mlir::Value>(Buildr.create<mlir::arith::CmpIOp>(
+        loc(Node.Loc), mlir::arith::CmpIPredicate::sle, Lhs, Rhs));
+  case TokenOp::OpType::GT:
+    return static_cast<mlir::Value>(Buildr.create<mlir::arith::CmpIOp>(
+        loc(Node.Loc), mlir::arith::CmpIPredicate::sgt, Lhs, Rhs));
+  case TokenOp::OpType::GE:
+    return static_cast<mlir::Value>(Buildr.create<mlir::arith::CmpIOp>(
+        loc(Node.Loc), mlir::arith::CmpIPredicate::sge, Lhs, Rhs));
+  case TokenOp::OpType::AND:
+    return static_cast<mlir::Value>(
+        Buildr.create<mlir::arith::AndIOp>(loc(Node.Loc), Lhs, Rhs));
+  case TokenOp::OpType::OR:
+    return static_cast<mlir::Value>(
+        Buildr.create<mlir::arith::OrIOp>(loc(Node.Loc), Lhs, Rhs));
+
+  case TokenOp::OpType::NOT:
+    throw Error(Node.Loc, "Unsupported operation");
   }
   throw Error(Node.Loc, "Unknown binary operator");
 }
 
-auto MLIRGen::visit(const UnaryExpr &Node, std::any) -> std::any {
-  throw Error(Node.Loc, "Unsupported operation");
+auto MLIRGen::visit(const UnaryExpr &Node, std::any Context) -> std::any {
+  switch (Node.Operator) {
+  case TokenOp::OpType::NOT: {
+    auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
+    // TODO: Fix this mess
+    auto DataType = Buildr.getI32Type();
+    auto OneAttr = Buildr.getI32IntegerAttr(1);
+    auto ZeroAttr = Buildr.getI32IntegerAttr(0);
+    auto One = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
+                                                      OneAttr);
+    auto Zero = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
+                                                       ZeroAttr);
+
+    return Buildr.create<mlir::arith::SelectOp>(loc(Node.Loc), Rhs, Zero, One);
+  }
+
+  case TokenOp::OpType::ADD:
+  case TokenOp::OpType::MINUS:
+  case TokenOp::OpType::MUL:
+  case TokenOp::OpType::DIV:
+  case TokenOp::OpType::EQ:
+  case TokenOp::OpType::NE:
+  case TokenOp::OpType::LT:
+  case TokenOp::OpType::LE:
+  case TokenOp::OpType::GT:
+  case TokenOp::OpType::GE:
+  case TokenOp::OpType::AND:
+  case TokenOp::OpType::OR:
+    throw Error(Node.Loc, "Unsupported operation");
+  }
 }
 
 auto MLIRGen::visit(const IntExpr &Node, std::any) -> std::any {
@@ -93,7 +151,11 @@ auto MLIRGen::visit(const IntExpr &Node, std::any) -> std::any {
 }
 
 auto MLIRGen::visit(const BoolExpr &Node, std::any) -> std::any {
-  throw Error(Node.Loc, "Unsupported operation");
+  auto DataType = Buildr.getI1Type();
+  auto DataAttribute = Buildr.getBoolAttr(Node.Value);
+  auto Op = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
+                                                   DataAttribute);
+  return static_cast<mlir::Value>(Op);
 }
 
 auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
