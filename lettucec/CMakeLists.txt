@@ -30,6 +30,7 @@ target_compile_options(lettucec PRIVATE
         -Wpedantic
         -Wextra
         -fPIE
+        -Werror
         )
 
 llvm_map_components_to_libnames(llvm_libs support core irreader orcjit nativecodegen)
