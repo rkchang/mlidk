@@ -8,17 +8,17 @@
 #include <iostream>
 #include <sstream>
 
-#include <mlir/IR/BuiltinOps.h>
-#include <mlir/IR/OwningOpRef.h>
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/ExecutionEngine/ExecutionEngine.h>
+#include <mlir/IR/BuiltinOps.h>
+#include <mlir/IR/OwningOpRef.h>
 #include <mlir/IR/Verifier.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
 
 #include "llvm/IR/Module.h"
-#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
@@ -107,4 +107,23 @@ int main(int argc, char *argv[]) {
   // Print out the LLVM IR
   std::cout << std::endl << "LLVM IR:" << std::endl;
   LlvmModule->dump();
+
+  // Create an MLIR execution engine. The execution engine eagerly JIT-compiles
+  // the module.
+  const mlir::ExecutionEngineOptions EngineOptions;
+  auto MaybeEngine =
+      mlir::ExecutionEngine::create(Module->getOperation(), EngineOptions);
+  assert(MaybeEngine && "failed to construct an execution engine");
+  auto &Engine = MaybeEngine.get();
+
+  std::cout << std::endl << "JIT output:" << std::endl;
+
+  // Invoke the JIT-compiled function.
+  int32_t Result = 0;
+  auto InvocationResult = Engine->invoke("main", Engine->result(Result));
+  if (InvocationResult) {
+    llvm::errs() << "JIT invocation failed\n";
+    return -1;
+  }
+  std::cout << "Return value: " << Result << std::endl;
 }

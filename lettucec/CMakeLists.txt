@@ -8,7 +8,7 @@ add_executable(lettucec
         parser.cpp
         passes.cpp
         MLIR_gen.cpp
-)
+        )
 
 
 # Debug Build flags
@@ -27,10 +27,10 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
 # General Build flags
 target_compile_options(lettucec PRIVATE
         -Wall
-        -Werror
         -Wpedantic
         -Wextra
         -fPIE
+        -Werror
         )
 
 llvm_map_components_to_libnames(llvm_libs support core irreader orcjit nativecodegen)
@@ -46,11 +46,12 @@ set(LIBS
         MLIRLLVMCommonConversion
         MLIRLLVMDialect
         MLIRLLVMToLLVMIRTranslation
+        MLIRExecutionEngine
         )
 
 
 # Link against LLVM and MLIR libraries
-target_link_libraries(lettucec ${LIBS} )
+target_link_libraries(lettucec ${LIBS})
 
 mlir_check_all_link_libraries(lettucec)
 
