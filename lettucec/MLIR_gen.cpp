@@ -29,9 +29,22 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
 
 //
 
+auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr)
+    -> mlir::IntegerType {
+  switch (Ty.Tag) {
+  case TypeTag::INT32:
+    return Buildr.getI32Type();
+  case TypeTag::BOOL:
+    return Buildr.getI1Type();
+  }
+}
+
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
-  auto Ty = Buildr.getFunctionType(std::nullopt, {Buildr.getI32Type()});
+
+  auto RetTy = lettuceTypeToMLIRType(Node.Exp->Ty.value(), Buildr);
+  auto Ty = Buildr.getFunctionType(std::nullopt, {RetTy});
+
   auto Fun = Buildr.create<mlir::func::FuncOp>(Loc, "main", Ty);
   Fun.addEntryBlock();
   auto &Blk = Fun.front();
@@ -41,10 +54,6 @@ auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
 
   auto Value = std::any_cast<mlir::Value>(V);
   Buildr.create<mlir::func::ReturnOp>(Loc, Value);
-
-  // TODO: Return type must change depending on whether int or bool expr!
-  auto Ty2 = Buildr.getFunctionType(std::nullopt, {Value.getType()});
-  Fun.setType(Ty2);
 
   return Fun;
 }
@@ -59,8 +68,7 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
-  // TODO: Expression type must change depending on whether int or bool expr!
-  auto TR = mlir::TypeRange(Buildr.getI32Type());
+  auto TR = mlir::TypeRange(lettuceTypeToMLIRType(Node.Ty.value(), Buildr));
 
   // Compile condition first
   auto Cond =
@@ -107,7 +115,7 @@ auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
   auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
-  auto DataType = Buildr.getI32Type(); // TODO: get type from lhs?
+  auto DataType = lettuceTypeToMLIRType(Node.Ty.value(), Buildr);
   switch (Node.Operator) {
   case TokenOp::OpType::ADD:
     return static_cast<mlir::Value>(
