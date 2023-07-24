@@ -32,7 +32,7 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
   auto Ty = Buildr.getFunctionType(std::nullopt, {Buildr.getI32Type()});
-  auto Fun = Buildr.create<mlir::func::FuncOp>(Loc, "_mlir_ciface_main", Ty);
+  auto Fun = Buildr.create<mlir::func::FuncOp>(Loc, "main", Ty);
   Fun.addEntryBlock();
   auto &Blk = Fun.front();
   Buildr.setInsertionPointToStart(&Blk);
