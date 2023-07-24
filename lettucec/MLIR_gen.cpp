@@ -3,13 +3,16 @@
 #include "lexer.hpp"
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
-#include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
-#include "mlir/IR/BuiltinDialect.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
+#include <mlir/IR/Builders.h>
+#include <mlir/IR/TypeRange.h>
+#include <mlir/IR/Value.h>
 
 #include <any>
 #include <cstddef>
-#include <mlir/IR/Value.h>
+
+#include <iostream>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
     : std::runtime_error(Loc.Filename + ":" + std::to_string(Loc.Line) + ":" +
@@ -58,8 +61,38 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
   return Node.Body->accept(*this, Context);
 }
 
-auto MLIRGen::visit(const IfExpr &Node, std::any) -> std::any {
-  throw Error(Node.Loc, "Unsupported operation");
+auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
+  // TODO: Check type?
+  auto TR = mlir::TypeRange(Buildr.getI1Type());
+
+  auto Cond =
+      std::any_cast<mlir::Value>(Node.Condition->accept(*this, Context));
+  auto If = Buildr.create<mlir::scf::IfOp>(loc(Node.Loc), TR, Cond, true);
+
+  auto OldBuildr = Buildr;
+
+  // Then branch
+  auto *Then = &If.getThenRegion();
+  Buildr = mlir::OpBuilder(Then);
+
+  auto TrueValue =
+      std::any_cast<mlir::Value>(Node.TrueBranch->accept(*this, Context));
+  auto TrueYield =
+      Buildr.create<mlir::scf::YieldOp>(loc(Node.TrueBranch->Loc), TrueValue);
+
+  // Else branch
+  auto *Else = &If.getElseRegion();
+  Buildr = mlir::OpBuilder(Else);
+  auto FalseValue =
+      std::any_cast<mlir::Value>(Node.FalseBranch->accept(*this, Context));
+  auto FalseYield =
+      Buildr.create<mlir::scf::YieldOp>(loc(Node.FalseBranch->Loc), FalseValue);
+
+  Buildr = OldBuildr;
+
+  auto Result = If->getOpResult(0);
+
+  return static_cast<mlir::Value>(Result);
 }
 
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
@@ -115,15 +148,16 @@ auto MLIRGen::visit(const UnaryExpr &Node, std::any Context) -> std::any {
   case TokenOp::OpType::NOT: {
     auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
     // TODO: Fix this mess
-    auto DataType = Buildr.getI32Type();
-    auto OneAttr = Buildr.getI32IntegerAttr(1);
-    auto ZeroAttr = Buildr.getI32IntegerAttr(0);
-    auto One = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
-                                                      OneAttr);
-    auto Zero = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
-                                                       ZeroAttr);
+    auto DataType = Buildr.getI1Type();
+    auto TrueAttr = Buildr.getBoolAttr(true);
+    auto FalseAttr = Buildr.getBoolAttr(false);
+    auto True = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
+                                                       TrueAttr);
+    auto False = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
+                                                        FalseAttr);
 
-    return Buildr.create<mlir::arith::SelectOp>(loc(Node.Loc), Rhs, Zero, One);
+    return static_cast<mlir::Value>(
+        Buildr.create<mlir::arith::SelectOp>(loc(Node.Loc), Rhs, False, True));
   }
 
   case TokenOp::OpType::ADD:
