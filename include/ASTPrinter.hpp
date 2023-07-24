@@ -14,6 +14,7 @@ public:
   auto visit(const IntExpr &Node, std::any Context) -> std::any override;
   auto visit(const BoolExpr &Node, std::any Context) -> std::any override;
   auto visit(const VarExpr &Node, std::any Context) -> std::any override;
+  auto visit(const CallExpr &Node, std::any Context) -> std::any override;
 
 private:
   /*

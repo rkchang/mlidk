@@ -107,3 +107,13 @@ public:
   VarExpr(Location Loc, std::string Name);
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };
+
+class CallExpr : public Expr {
+public:
+  std::string FuncName;
+  std::vector<std::unique_ptr<Expr>> Args;
+
+  CallExpr(Location Loc, std::string FuncName,
+           std::vector<std::unique_ptr<Expr>> Args);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};

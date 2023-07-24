@@ -20,7 +20,21 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
   if (auto IfOpt = accept({TokenTag::IF})) {
     return ifExpression(IfOpt.value());
   }
+  if (auto FuncCallOpt = chain_accept({TokenTag::IDENT, TokenTag::LPAREN})) {
+    return func_call(FuncCallOpt.value()[0]);
+  }
   return logic();
+}
+
+auto Parser::func_call(Token FuncIdent) -> std::unique_ptr<Expr> {
+  // Get arguments
+  std::vector<std::unique_ptr<Expr>> Args;
+  while (!accept({TokenTag::RPAREN})) {
+    Args.push_back(expression());
+    accept({TokenTag::COMMA});
+  }
+  const Location Loc = {FuncIdent.Filename, FuncIdent.Line, FuncIdent.Column};
+  return std::make_unique<CallExpr>(Loc, FuncIdent.Value, std::move(Args));
 }
 
 auto Parser::logic() -> std::unique_ptr<Expr> {
@@ -145,10 +159,25 @@ auto Parser::ifExpression(Token StartToken) -> std::unique_ptr<Expr> {
 
 //
 
+auto Parser::chain_accept(std::initializer_list<TokenTag> Tags)
+    -> std::optional<std::vector<Token>> {
+  auto OldState = Lex.getState();
+  std::vector<Token> Accepted;
+  for (const auto &Tag : Tags) {
+    auto TokenOpt = accept({Tag});
+    if (!TokenOpt) {
+      Lex.setState(OldState);
+      return std::nullopt;
+    }
+    Accepted.push_back(TokenOpt.value());
+  }
+  return Accepted;
+}
+
 auto Parser::accept(std::initializer_list<TokenTag> Tags)
     -> std::optional<Token> {
   for (const auto &Tag : Tags) {
-    if (check(Tag)) {
+    if (check({Tag})) {
       return Lex.token();
     }
   }
@@ -163,9 +192,14 @@ auto Parser::expect(std::initializer_list<TokenTag> Tags) -> Token {
   return Found.value();
 }
 
-auto Parser::check(TokenTag Tag) -> bool {
+auto Parser::check(std::initializer_list<TokenTag> Tags) -> bool {
   if (Lex.isDone()) {
     return false;
   }
-  return Lex.peek().Tag == Tag;
+  for (const auto &Tag : Tags) {
+    if (Lex.peek().Tag == Tag) {
+      return true;
+    }
+  }
+  return false;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AST.fwd.hpp"
+#include "ASTVisitor.hpp"
 #include <any>
 
 class ASTVisitor {
@@ -18,6 +19,7 @@ public:
   virtual std::any visit(const IntExpr &Node, std::any Context) = 0;
   virtual std::any visit(const BoolExpr &Node, std::any Context) = 0;
   virtual std::any visit(const VarExpr &Node, std::any Context) = 0;
+  virtual std::any visit(const CallExpr &Node, std::any Context) = 0;
 };
 
 // TODO: Add default visiting

@@ -36,31 +36,37 @@ auto TokenOp::OpToStr(OpType Op) -> std::string {
 
 // All keywords in language
 const std::unordered_map<std::string, TokenTag> KeyWords = {
-    {"let", TokenTag::LET},    {"in", TokenTag::IN},
-    {"if", TokenTag::IF},      {"then", TokenTag::THEN},
-    {"else", TokenTag::ELSE},  {"true", TokenTag::BOOL},
-    {"false", TokenTag::BOOL}, {"and", TokenTag::AND},
-    {"or", TokenTag::OR},      {"not", TokenTag::NOT}};
+    {"let", TokenTag::LET},
+    {"in", TokenTag::IN},
+    {"if", TokenTag::IF},
+    {"then", TokenTag::THEN},
+    {"else", TokenTag::ELSE},
+    {"true", TokenTag::BOOL},
+    {"false", TokenTag::BOOL},
+    {"and", TokenTag::AND},
+    {"or", TokenTag::OR},
+    {"not", TokenTag::NOT},
+    {"func_def", TokenTag::FUNC_DEF}};
 
 //--------
 // Lexer
 //--------
 
 Lexer::Lexer(std::string_view Source, std::string Filename)
-    : Index(0), Line(1), Column(1), Size(Source.length()), Source(Source),
+    : State{0, 1, 1}, Size(Source.length()), Source(Source),
       Filename(Filename) {}
 
 auto Lexer::token() -> Token {
   // Skip all leading whitespace
   takeWhile(std::isspace);
   if (isDone()) {
-    return Token{TokenTag::EOI, "", Filename, Line, Column};
+    return Token{TokenTag::EOI, "", Filename, State.Line, State.Column};
   }
 
   // Keep track of start position
-  auto Char = Source[Index];
-  auto StartLine = Line;
-  auto StartCol = Column;
+  auto Char = Source[State.Index];
+  auto StartLine = State.Line;
+  auto StartCol = State.Column;
   switch (Char) {
   case '+':
     step();
@@ -111,7 +117,7 @@ auto Lexer::token() -> Token {
       return Token{TokenTag::BANG_EQUAL, "!=", Filename, StartLine, StartCol};
     }
     // '!' is not a recognized token
-    throw Error(Line, Column, "Invalid Token", Filename);
+    throw Error(State.Line, State.Column, "Invalid Token", Filename);
   }
   case '(':
     step();
@@ -119,6 +125,9 @@ auto Lexer::token() -> Token {
   case ')':
     step();
     return Token{TokenTag::RPAREN, ")", Filename, StartLine, StartCol};
+  case ',':
+    step();
+    return Token{TokenTag::COMMA, ",", Filename, StartLine, StartCol};
 
   default:
     if (std::isdigit(Char)) {
@@ -135,49 +144,49 @@ auto Lexer::token() -> Token {
       return Token{Tag, Value, Filename, StartLine, StartCol};
     }
   }
-  throw Error(Line, Column, "Invalid Token", Filename);
+  throw Error(State.Line, State.Column, "Invalid Token", Filename);
 }
 
 auto Lexer::peek() -> Token {
   // This function should be const,
   // but can't be because token() isn't.
-  auto OldIndex = Index;
-  auto OldLine = Line;
-  auto OldColumn = Column;
+  auto OldState = State;
   auto Token = token();
-  Index = OldIndex;
-  Line = OldLine;
-  Column = OldColumn;
+  State = OldState;
   return Token;
 }
 
-auto Lexer::isDone() -> bool { return Index >= Size; }
+auto Lexer::getState() -> SrcLoc const { return State; }
+
+auto Lexer::setState(Lexer::SrcLoc NewState) -> void { State = NewState; }
+
+auto Lexer::isDone() -> bool { return State.Index >= Size; }
 
 auto Lexer::lookahead(int N) -> std::optional<char> {
-  if (Index + N >= Size) {
+  if (State.Index + N >= Size) {
     return std::nullopt;
   }
-  return std::make_optional(Source[Index + N]);
+  return std::make_optional(Source[State.Index + N]);
 }
 
 auto Lexer::step() -> char {
   // TODO: Check for out of range
-  auto Char = Source[Index];
-  Index += 1;
+  auto Char = Source[State.Index];
+  State.Index += 1;
   if (Char == '\n') {
-    Line += 1;
-    Column = 1;
+    State.Line += 1;
+    State.Column = 1;
   } else {
-    Column += 1;
+    State.Column += 1;
   }
   return Char;
 }
 
 auto Lexer::takeWhile(std::function<bool(char)> Predicate) -> std::string {
-  auto Start = Index;
-  while (!isDone() && Predicate(Source[Index])) {
+  auto Start = State.Index;
+  while (!isDone() && Predicate(Source[State.Index])) {
     step();
   }
-  std::string SubStr{Source.substr(Start, Index - Start)};
+  std::string SubStr{Source.substr(Start, State.Index - Start)};
   return SubStr;
 }

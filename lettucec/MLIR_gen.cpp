@@ -215,3 +215,9 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
   }
   throw Error(Node.Loc, "Unknown variable reference: " + Node.Name);
 }
+
+auto MLIRGen::visit(const CallExpr &Node, std::any) -> std::any {
+#include "lexer.hpp"
+  throw UserError(Node.Loc.Filename, Node.Loc.Line, Node.Loc.Column,
+                  "unimplemented");
+}
