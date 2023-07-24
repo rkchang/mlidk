@@ -41,10 +41,7 @@ set(LIBS
         ${dialect_libs}
         ${conversion_libs}
         ${llvm_libs}
-        MLIRArithDialect
         MLIROptLib
-        MLIRLLVMCommonConversion
-        MLIRLLVMDialect
         MLIRLLVMToLLVMIRTranslation
         MLIRExecutionEngine
         )
