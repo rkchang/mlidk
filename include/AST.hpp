@@ -2,8 +2,11 @@
 
 #include "ASTVisitor.hpp"
 #include "lexer.hpp"
+#include "types.hpp"
+
 #include <any>
 #include <memory>
+#include <optional>
 #include <string>
 
 struct Location {
@@ -21,9 +24,13 @@ public:
   virtual std::any accept(ASTVisitor &Visitor, std::any Context) const = 0;
 };
 
+enum class ExprKind { LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR };
+
 class Expr : public ASTNode {
 public:
-  Expr(Location Loc) : ASTNode(Loc) {}
+  const ExprKind Kind;
+  std::optional<Type> Ty;
+  Expr(Location Loc, ExprKind Kind) : ASTNode(Loc), Kind(Kind) {}
 };
 
 class RootNode : public ASTNode {

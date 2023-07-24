@@ -2,13 +2,14 @@ set(CMAKE_CXX_CLANG_TIDY clang-tidy)
 
 add_executable(lettucec
         lettucec.cpp # main file for letttucec
+        types.cpp
         AST.cpp
+        type_checker.cpp
         ASTPrinter.cpp
         lexer.cpp
         parser.cpp
         passes.cpp
-        MLIR_gen.cpp
-        )
+        MLIR_gen.cpp)
 
 
 # Debug Build flags
