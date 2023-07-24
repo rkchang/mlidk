@@ -9,6 +9,10 @@ auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
   case TokenOp::OpType::MINUS:
   case TokenOp::OpType::MUL:
   case TokenOp::OpType::DIV:
+    typeCheck(Ctx, Lhs, Int32T);
+    typeCheck(Ctx, Rhs, Int32T);
+    return Int32T;
+
   // Comparisson
   case TokenOp::OpType::LT:
   case TokenOp::OpType::LE:
@@ -16,7 +20,7 @@ auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
   case TokenOp::OpType::GE:
     typeCheck(Ctx, Lhs, Int32T);
     typeCheck(Ctx, Rhs, Int32T);
-    return Int32T;
+    return BoolT;
 
   // Boolean
   case TokenOp::OpType::AND:
@@ -30,7 +34,7 @@ auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
   case TokenOp::OpType::NE: {
     auto LhsTy = typeInfer(Ctx, Lhs);
     typeCheck(Ctx, Rhs, LhsTy);
-    return LhsTy;
+    return BoolT;
   }
 
   // Unary
@@ -83,9 +87,13 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> Type {
   }
   case ExprKind::VAR: {
     auto *E = static_cast<VarExpr *>(&Exp);
-    auto Ty = Ctx[E->Name];
-    Exp.Ty = Ty;
-    return Ty;
+    if (Ctx.contains(E->Name)) {
+
+      auto Ty = Ctx[E->Name];
+      Exp.Ty = Ty;
+      return Ty;
+    }
+    throw TypeError(Exp.Loc, "Undefined variable '" + E->Name + "'");
   }
   case ExprKind::LET: {
     auto *E = static_cast<LetExpr *>(&Exp);
