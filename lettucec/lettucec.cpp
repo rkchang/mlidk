@@ -3,9 +3,11 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "passes.hpp"
+#include "type_checker.hpp"
 
 #include <cstdlib>
 #include <iostream>
+#include <unordered_map>
 
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
@@ -50,6 +52,16 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
     auto Printer = ASTPrinter();
     AST->accept(Printer, 0);
   }
+
+  auto TypeCtx = std::unordered_map<std::string, Type>();
+  typeInfer(TypeCtx, *(AST->Exp));
+
+  if (Dbg) {
+    std::cout << std::endl << "TAST:" << std::endl;
+    auto Printer = ASTPrinter();
+    AST->accept(Printer, 0);
+  }
+
   return AST;
 }
 
