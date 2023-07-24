@@ -62,34 +62,46 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
-  // TODO: Check type?
-  auto TR = mlir::TypeRange(Buildr.getI1Type());
+  // TODO: Expression type must change depending on whether int or bool expr!
+  auto TR = mlir::TypeRange(Buildr.getI32Type());
 
+  // Compile condition first
   auto Cond =
       std::any_cast<mlir::Value>(Node.Condition->accept(*this, Context));
+
+  // The 'if' builders are pretty knarly and poorly documented, this was mostly
+  // discovered through trial and error. This particular constructor should be:
+  // TypeRange for result types; Value for condition, bool for withElseRegion
   auto If = Buildr.create<mlir::scf::IfOp>(loc(Node.Loc), TR, Cond, true);
 
+  // Store the current OpBuilder
   auto OldBuildr = Buildr;
+
+  // Both branches follow the same general shape:
+  // - Get the respective region from the IfOp
+  // - Create a new OpBuilder for the region
+  // - Generate the result value for the branch
+  // - Generate a YieldOp with the result for the branch
 
   // Then branch
   auto *Then = &If.getThenRegion();
   Buildr = mlir::OpBuilder(Then);
-
   auto TrueValue =
       std::any_cast<mlir::Value>(Node.TrueBranch->accept(*this, Context));
-  auto TrueYield =
-      Buildr.create<mlir::scf::YieldOp>(loc(Node.TrueBranch->Loc), TrueValue);
+  Buildr.create<mlir::scf::YieldOp>(loc(Node.TrueBranch->Loc), TrueValue);
 
   // Else branch
   auto *Else = &If.getElseRegion();
   Buildr = mlir::OpBuilder(Else);
   auto FalseValue =
       std::any_cast<mlir::Value>(Node.FalseBranch->accept(*this, Context));
-  auto FalseYield =
-      Buildr.create<mlir::scf::YieldOp>(loc(Node.FalseBranch->Loc), FalseValue);
+  Buildr.create<mlir::scf::YieldOp>(loc(Node.FalseBranch->Loc), FalseValue);
 
+  // Restore old OpBuilder
   Buildr = OldBuildr;
 
+  // For some reson IfOp is not a Value, so we must get the result value
+  // for the op, and use that as our return value.
   auto Result = If->getOpResult(0);
 
   return static_cast<mlir::Value>(Result);
