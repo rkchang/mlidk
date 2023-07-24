@@ -1,0 +1,6 @@
+let x = true in
+let y = 3 in
+if x and false then
+    y + 1
+else
+    y - 1

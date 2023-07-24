@@ -10,6 +10,7 @@
 
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/OwningOpRef.h>
@@ -64,6 +65,7 @@ int main(int argc, char *argv[]) {
   mlir::MLIRContext Context;
   Context.getOrLoadDialect<mlir::arith::ArithDialect>();
   Context.getOrLoadDialect<mlir::func::FuncDialect>();
+  Context.getOrLoadDialect<mlir::scf::SCFDialect>();
   auto MLIRGenerator = MLIRGen(Context);
   AST->accept(MLIRGenerator, 0);
   mlir::OwningOpRef<mlir::ModuleOp> Module = MLIRGenerator.Module;
