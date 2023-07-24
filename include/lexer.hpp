@@ -59,23 +59,6 @@ auto OpToStr(OpType) -> std::string;
 
 } // namespace TokenOp
 
-class LexerError : public std::exception {
-public:
-  const int Line;
-  const int Column;
-  const std::string Message;
-  const std::string Filename;
-
-  LexerError(int Line, int Column, std::string Message, std::string Filename);
-  auto message() const -> const std::string;
-  auto what() const noexcept -> const char * override;
-};
-
-class InvalidToken : public LexerError {
-public:
-  InvalidToken(int Line, int Column, std::string Filename);
-};
-
 struct Token {
   const TokenTag Tag;
   const std::string Value;
@@ -84,8 +67,24 @@ struct Token {
   const int Column;
 };
 
+/**
+ * Thrown when the user has made an error (ex: an unknown token)
+ */
+class UserError : public std::runtime_error {
+public:
+  UserError(std::string Filename, int Line, int Column, std::string Message)
+      : std::runtime_error(Filename + ":" + std::to_string(Line) + ":" +
+                           std::to_string(Column) + ": " + Message) {}
+};
+
 class Lexer {
 public:
+  class Error : public UserError {
+  public:
+    Error(int Line, int Column, std::string Message, std::string Filename)
+        : UserError(Filename, Line, Column, "Lexer Error: " + Message){};
+  };
+
   Lexer(std::string_view Source, std::string Filename);
 
   /**

@@ -1,4 +1,4 @@
-#set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+set(CMAKE_CXX_CLANG_TIDY clang-tidy)
 
 add_executable(lettucec
         lettucec.cpp # main file for letttucec
@@ -30,7 +30,7 @@ target_compile_options(lettucec PRIVATE
         -Wpedantic
         -Wextra
         -fPIE
-        #        -Werror
+        -Werror
         )
 
 llvm_map_components_to_libnames(llvm_libs support core irreader orcjit nativecodegen)

@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "passes.hpp"
 
+#include <cstdlib>
 #include <iostream>
 
 #include <mlir/Dialect/Arith/IR/Arith.h>
@@ -22,20 +23,22 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 
+const std::string ReplMode = "REPL";
+
 llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional,
-                                         llvm::cl::desc("<input toy file>"),
-                                         llvm::cl::init("-"),
+                                         llvm::cl::desc("<input lettuce file>"),
+                                         llvm::cl::init(ReplMode),
                                          llvm::cl::value_desc("filename"));
 
 llvm::cl::opt<bool>
-    Dbg("printIR", llvm::cl::desc("Output AST, MLIR and LLVM IR to stdout"));
+    Dbg("printDbg", llvm::cl::desc("Output AST, MLIR and LLVM IR to stdout"));
 
 std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
                                          const std::string &Filename) {
   // Print source
   if (Dbg) {
     std::cout << "Source:" << std::endl;
-    llvm::outs() << Buffer;
+    llvm::outs() << Buffer << "\n";
   }
 
   auto Lexr = Lexer(Buffer, Filename);
@@ -50,13 +53,14 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
   return AST;
 }
 
-void runJIT(mlir::MLIRContext &Context, std::unique_ptr<RootNode> AST) {
+mlir::OwningOpRef<mlir::ModuleOp> genMLIR(mlir::MLIRContext &Context,
+                                          std::unique_ptr<RootNode> AST) {
   auto MLIRGenerator = MLIRGen(Context);
   AST->accept(MLIRGenerator, 0);
   mlir::OwningOpRef<mlir::ModuleOp> Module = MLIRGenerator.Module;
   if (failed(mlir::verify(Module->getOperation()))) {
-    std::cout << "Failed to verify MLIR Module\n";
-    exit(-1);
+    std::cerr << "Failed to verify MLIR Module\n";
+    std::exit(1);
   }
   if (Dbg) {
     // Print out the MLIR
@@ -69,38 +73,40 @@ void runJIT(mlir::MLIRContext &Context, std::unique_ptr<RootNode> AST) {
   applyPassManagerCLOptions(PM);
   PM.addPass(lettuce::createLowerToLLVMPass());
   if (mlir::failed(PM.run(*Module))) {
-    exit(4);
+    std::cerr << "Failed to lower to LLVM dialect\n";
+    std::exit(1);
   }
   if (Dbg) {
     // Print out the LLVM dialect
     std::cout << std::endl << "LLVM Dialect:" << std::endl;
     Module->dump();
   }
+  return Module;
+}
 
+void runJIT(mlir::OwningOpRef<mlir::ModuleOp> Module) {
   // Initialize LLVM targets.
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
   mlir::registerLLVMDialectTranslation(*Module->getContext());
 
-  // Create an MLIR execution engine. The execution engine eagerly
-  // JIT-compiles the module.
+  // Create an MLIR execution engine.
   mlir::ExecutionEngineOptions EngineOptions;
   EngineOptions.enableObjectDump = true;
   auto MaybeEngine =
       mlir::ExecutionEngine::create(Module->getOperation(), EngineOptions);
-  assert(MaybeEngine && "failed to construct an execution engine");
+  assert(MaybeEngine && "Failed to construct an execution engine");
   auto &Engine = MaybeEngine.get();
 
-  if (InputFilename == "-") {
+  if (InputFilename != ReplMode) {
     Engine->dumpToObjectFile("output.o");
+    std::cout << "Wrote output.o" << std::endl;
   } else {
     // Invoke the JIT-compiled function.
     int32_t Result = 0;
-    llvm::SmallVector<void *> argsArray{&Result};
-    auto InvocationResult = Engine->invokePacked("main", argsArray);
+    llvm::SmallVector<void *> ArgsArray{&Result};
+    auto InvocationResult = Engine->invokePacked("main", ArgsArray);
     if (InvocationResult) {
-      llvm::errs() << "JIT invocation failed\n";
-      exit(-1);
+      std::cerr << "JIT invocation failed\n";
+      std::exit(1);
     }
     std::cout << "Return value: " << Result << std::endl;
   }
@@ -110,6 +116,8 @@ int main(int argc, char *argv[]) {
   mlir::registerAsmPrinterCLOptions();
   mlir::registerMLIRContextCLOptions();
   mlir::registerPassManagerCLOptions();
+  llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
   llvm::cl::ParseCommandLineOptions(argc, argv, "The lettuce compiler\n");
 
   // Generate MLIR
@@ -118,14 +126,17 @@ int main(int argc, char *argv[]) {
   Context.getOrLoadDialect<mlir::func::FuncDialect>();
   Context.getOrLoadDialect<mlir::scf::SCFDialect>();
 
-  // TODO: allow input from stdin
-  if (InputFilename == "-") {
-    // TODO: Use a readline library (maybe libedit?)
+  if (InputFilename == ReplMode) {
     std::string Line;
     std::cout << ">>> ";
     while (std::getline(std::cin, Line)) {
-      auto AST = parseInputFile(Line, InputFilename);
-      runJIT(Context, std::move(AST));
+      try {
+        auto AST = parseInputFile(Line, InputFilename);
+        runJIT(genMLIR(Context, std::move(AST)));
+      } catch (UserError &Excep) {
+        std::cerr << Excep.what() << "\n";
+      }
+      std::cout << ">>> ";
     }
   } else {
     auto FileOrErr = llvm::MemoryBuffer::getFile(InputFilename);
@@ -135,6 +146,6 @@ int main(int argc, char *argv[]) {
     }
     auto Buffer = FileOrErr.get()->getBuffer();
     auto AST = parseInputFile(Buffer, InputFilename);
-    runJIT(Context, std::move(AST));
+    runJIT(genMLIR(Context, std::move(AST)));
   }
 }

@@ -6,11 +6,11 @@
 #include <optional>
 
 class Parser {
-  class Error : public std::runtime_error {
+  class Error : public UserError {
   public:
-    const Token Found;
-
-    Error(Token Found);
+    Error(Token Found)
+        : UserError(Found.Filename, Found.Line, Found.Column,
+                    "Parser Error: " + Found.Value) {}
   };
 
 public:
