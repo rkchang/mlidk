@@ -5,6 +5,8 @@ add_executable(all_tests
         lexer_test.cpp
         parser_test.cpp
         ${PROJECT_SOURCE_DIR}/lettucec/AST.cpp
+        ${PROJECT_SOURCE_DIR}/lettucec/types.cpp
+        ${PROJECT_SOURCE_DIR}/lettucec/type_checker.cpp
         ${PROJECT_SOURCE_DIR}/lettucec/lexer.cpp
         ${PROJECT_SOURCE_DIR}/lettucec/ASTPrinter.cpp
         ${PROJECT_SOURCE_DIR}/lettucec/parser.cpp
