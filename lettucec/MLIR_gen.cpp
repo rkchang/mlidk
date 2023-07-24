@@ -1,5 +1,4 @@
 #include "MLIR_gen.hpp"
-#include "AST.fwd.hpp"
 #include "lexer.hpp"
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
@@ -217,7 +216,6 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
 }
 
 auto MLIRGen::visit(const CallExpr &Node, std::any) -> std::any {
-#include "lexer.hpp"
   throw UserError(Node.Loc.Filename, Node.Loc.Line, Node.Loc.Column,
                   "unimplemented");
 }

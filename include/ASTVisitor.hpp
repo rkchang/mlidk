@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AST.fwd.hpp"
-#include "ASTVisitor.hpp"
 #include <any>
 
 class ASTVisitor {

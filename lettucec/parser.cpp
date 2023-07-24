@@ -1,8 +1,6 @@
 #include "parser.hpp"
-#include "AST.fwd.hpp"
 #include "AST.hpp"
 #include "lexer.hpp"
-#include <cstddef>
 #include <memory>
 // TODO: EOI?
 
@@ -29,10 +27,13 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
 auto Parser::func_call(Token FuncIdent) -> std::unique_ptr<Expr> {
   // Get arguments
   std::vector<std::unique_ptr<Expr>> Args;
-  while (!accept({TokenTag::RPAREN})) {
+  if (!check({TokenTag::RPAREN})) {
     Args.push_back(expression());
-    accept({TokenTag::COMMA});
+    while (accept({TokenTag::COMMA})) {
+      Args.push_back(expression());
+    }
   }
+  expect({TokenTag::RPAREN});
   const Location Loc = {FuncIdent.Filename, FuncIdent.Line, FuncIdent.Column};
   return std::make_unique<CallExpr>(Loc, FuncIdent.Value, std::move(Args));
 }

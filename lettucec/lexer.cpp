@@ -36,17 +36,12 @@ auto TokenOp::OpToStr(OpType Op) -> std::string {
 
 // All keywords in language
 const std::unordered_map<std::string, TokenTag> KeyWords = {
-    {"let", TokenTag::LET},
-    {"in", TokenTag::IN},
-    {"if", TokenTag::IF},
-    {"then", TokenTag::THEN},
-    {"else", TokenTag::ELSE},
-    {"true", TokenTag::BOOL},
-    {"false", TokenTag::BOOL},
-    {"and", TokenTag::AND},
-    {"or", TokenTag::OR},
-    {"not", TokenTag::NOT},
-    {"func_def", TokenTag::FUNC_DEF}};
+    {"let", TokenTag::LET},     {"in", TokenTag::IN},
+    {"if", TokenTag::IF},       {"then", TokenTag::THEN},
+    {"else", TokenTag::ELSE},   {"true", TokenTag::BOOL},
+    {"false", TokenTag::BOOL},  {"and", TokenTag::AND},
+    {"or", TokenTag::OR},       {"not", TokenTag::NOT},
+    {"fun", TokenTag::FUNC_DEF}};
 
 //--------
 // Lexer
