@@ -12,6 +12,7 @@
 #include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
+#include <mlir/IR/AsmState.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/OwningOpRef.h>
 #include <mlir/IR/Verifier.h>
@@ -24,6 +25,14 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 
+llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional,
+                                         llvm::cl::desc("<input toy file>"),
+                                         llvm::cl::init("-"),
+                                         llvm::cl::value_desc("filename"));
+
+llvm::cl::opt<bool>
+    Dbg("printIR", llvm::cl::desc("Output AST, MLIR and LLVM IR to stdout"));
+
 std::optional<std::string> readFile(const std::string &Filename) {
   const std::ifstream IFS(Filename);
   if (!IFS) {
@@ -35,48 +44,40 @@ std::optional<std::string> readFile(const std::string &Filename) {
   return SrcBuffer.str();
 }
 
-int main(int argc, char *argv[]) {
-  if (argc <= 1 || argc > 2) {
-    std::cerr << "Usage: ./mlidk <filename>"
-              << "\n";
-    return 1;
-  }
-  const std::string Filename(argv[1]);
-  auto V = readFile(Filename);
-  if (!V) {
-    return 1;
-  }
-  auto Source = *V;
-
+std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
+                                         const std::string &Filename) {
   // Print source
-  std::cout << "Source:" << std::endl;
-  std::cout << Source << std::endl;
+  if (Dbg) {
+    std::cout << "Source:" << std::endl;
+    llvm::outs() << Buffer;
+  }
 
-  auto Lexr = Lexer(Source, Filename);
+  auto Lexr = Lexer(Buffer, Filename);
   auto Parsr = Parser(Lexr);
   auto AST = Parsr.parse();
-
   // Print out the AST
-  std::cout << std::endl << "AST:" << std::endl;
-  auto Printer = ASTPrinter();
-  AST->accept(Printer, 0);
+  if (Dbg) {
+    std::cout << std::endl << "AST:" << std::endl;
+    auto Printer = ASTPrinter();
+    AST->accept(Printer, 0);
+  }
+  return AST;
+}
 
-  // Generate MLIR
-  mlir::MLIRContext Context;
-  Context.getOrLoadDialect<mlir::arith::ArithDialect>();
-  Context.getOrLoadDialect<mlir::func::FuncDialect>();
-  Context.getOrLoadDialect<mlir::scf::SCFDialect>();
+void runJIT(mlir::MLIRContext &Context, std::unique_ptr<RootNode> AST) {
   auto MLIRGenerator = MLIRGen(Context);
   AST->accept(MLIRGenerator, 0);
   mlir::OwningOpRef<mlir::ModuleOp> Module = MLIRGenerator.Module;
 
-  // Print out the MLIR
-  std::cout << std::endl << "MLIR:" << std::endl;
-  Module->dump();
+  if (Dbg) {
+    // Print out the MLIR
+    std::cout << std::endl << "MLIR:" << std::endl;
+    Module->dump();
+  }
 
   if (failed(mlir::verify(Module->getOperation()))) {
     std::cout << "Failed to verify MLIR Module\n";
-    return -1;
+    exit(-1);
   }
 
   // Lower to LLVM
@@ -85,12 +86,14 @@ int main(int argc, char *argv[]) {
   PM.addPass(lettuce::createLowerToLLVMPass());
 
   if (mlir::failed(PM.run(*Module))) {
-    return 4;
+    exit(4);
   }
 
-  // Print out the LLVM dialect
-  std::cout << std::endl << "LLVM Dialect:" << std::endl;
-  Module->dump();
+  if (Dbg) {
+    // Print out the LLVM dialect
+    std::cout << std::endl << "LLVM Dialect:" << std::endl;
+    Module->dump();
+  }
 
   // Initialize LLVM targets.
   llvm::InitializeNativeTarget();
@@ -103,12 +106,14 @@ int main(int argc, char *argv[]) {
       mlir::translateModuleToLLVMIR(Module->getOperation(), LlvmContext);
   if (!LlvmModule) {
     llvm::errs() << "Failed to emit LLVM IR\n";
-    return -1;
+    exit(-1);
   }
 
-  // Print out the LLVM IR
-  std::cout << std::endl << "LLVM IR:" << std::endl;
-  LlvmModule->dump();
+  if (Dbg) {
+    // Print out the LLVM IR
+    std::cout << std::endl << "LLVM IR:" << std::endl;
+    LlvmModule->dump();
+  }
 
   // Create an MLIR execution engine. The execution engine eagerly JIT-compiles
   // the module.
@@ -118,14 +123,44 @@ int main(int argc, char *argv[]) {
   assert(MaybeEngine && "failed to construct an execution engine");
   auto &Engine = MaybeEngine.get();
 
-  std::cout << std::endl << "JIT output:" << std::endl;
-
   // Invoke the JIT-compiled function.
   int32_t Result = 0;
   auto InvocationResult = Engine->invoke("main", Engine->result(Result));
   if (InvocationResult) {
     llvm::errs() << "JIT invocation failed\n";
-    return -1;
+    exit(-1);
   }
   std::cout << "Return value: " << Result << std::endl;
+}
+
+int main(int argc, char *argv[]) {
+  mlir::registerAsmPrinterCLOptions();
+  mlir::registerMLIRContextCLOptions();
+  mlir::registerPassManagerCLOptions();
+  llvm::cl::ParseCommandLineOptions(argc, argv, "The lettuce compiler\n");
+
+  // Generate MLIR
+  mlir::MLIRContext Context;
+  Context.getOrLoadDialect<mlir::arith::ArithDialect>();
+  Context.getOrLoadDialect<mlir::func::FuncDialect>();
+  Context.getOrLoadDialect<mlir::scf::SCFDialect>();
+
+  if (InputFilename == "-") {
+    std::string Line;
+    std::cout << ">>> ";
+    while (std::getline(std::cin, Line)) {
+      auto AST = parseInputFile(Line, InputFilename);
+      runJIT(Context, std::move(AST));
+      std::cout << ">>> ";
+    }
+  } else {
+    auto FileOrErr = llvm::MemoryBuffer::getFileOrSTDIN(InputFilename);
+    if (const std::error_code Ec = FileOrErr.getError()) {
+      std::cerr << "Error opening input file: " << Ec.message() << "\n";
+      return 1;
+    }
+    auto Buffer = FileOrErr.get()->getBuffer();
+    auto AST = parseInputFile(Buffer, InputFilename);
+    runJIT(Context, std::move(AST));
+  }
 }
