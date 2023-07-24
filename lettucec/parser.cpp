@@ -6,12 +6,6 @@
 #include <memory>
 // TODO: EOI?
 
-Parser::Error::Error(Token Found)
-    : std::runtime_error(Found.Filename + ":" + std::to_string(Found.Line) +
-                         ":" + std::to_string(Found.Column) + ": " +
-                         "Parser Error" + ": " + Found.Value),
-      Found(Found) {}
-
 Parser::Parser(Lexer &Lex) : Lex(Lex) {}
 
 auto Parser::parse() -> std::unique_ptr<RootNode> {

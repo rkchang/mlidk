@@ -42,28 +42,6 @@ const std::unordered_map<std::string, TokenTag> KeyWords = {
     {"false", TokenTag::BOOL}, {"and", TokenTag::AND},
     {"or", TokenTag::OR},      {"not", TokenTag::NOT}};
 
-//------------
-// LexerError
-//------------
-
-LexerError::LexerError(int Line, int Column, std::string Message,
-                       std::string Filename)
-    : Line(Line), Column(Column), Message(Message), Filename(Filename) {}
-
-auto LexerError::message() const -> const std::string {
-  std::string S = Filename + ":" + std::to_string(Line) + ":" +
-                  std::to_string(Column) + ": " + Message;
-  return S;
-}
-
-auto LexerError::what() const noexcept -> const char * {
-  const static std::string Msg = message();
-  return const_cast<char *>(Msg.c_str());
-}
-
-InvalidToken::InvalidToken(int Line, int Column, std::string Filename)
-    : LexerError(Line, Column, "Invalid Token", Filename) {}
-
 //--------
 // Lexer
 //--------
@@ -133,7 +111,7 @@ auto Lexer::token() -> Token {
       return Token{TokenTag::BANG_EQUAL, "!=", Filename, StartLine, StartCol};
     }
     // '!' is not a recognized token
-    throw InvalidToken(Line, Column, Filename);
+    throw Error(Line, Column, "Invalid Token", Filename);
   }
   case '(':
     step();
@@ -157,7 +135,7 @@ auto Lexer::token() -> Token {
       return Token{Tag, Value, Filename, StartLine, StartCol};
     }
   }
-  throw InvalidToken(Line, Column, Filename);
+  throw Error(Line, Column, "Invalid Token", Filename);
 }
 
 auto Lexer::peek() -> Token {
