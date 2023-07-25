@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-enum class TypeTag { INT32, BOOL, FUNC };
+enum class TypeTag { VOID, INT32, BOOL, FUNC };
 
 struct Type {
   const TypeTag Tag;
@@ -19,6 +19,10 @@ struct Type {
   auto toString() -> std::string;
 };
 
+struct VoidTClass : public Type {
+  VoidTClass() : Type(TypeTag::VOID) {}
+};
+
 struct Int32TClass : public Type {
   Int32TClass() : Type(TypeTag::INT32) {}
 };
@@ -27,6 +31,7 @@ struct BoolTClass : public Type {
   BoolTClass() : Type(TypeTag::BOOL) {}
 };
 
+const std::shared_ptr<Type> VoidT = std::make_shared<VoidTClass>();
 const std::shared_ptr<Type> Int32T = std::make_shared<Int32TClass>();
 const std::shared_ptr<Type> BoolT = std::make_shared<BoolTClass>();
 
@@ -35,7 +40,7 @@ struct FuncT : public Type {
   std::shared_ptr<Type> Ret;
 
   FuncT(std::vector<Type> Params, std::shared_ptr<Type> Ret)
-      : Type(TypeTag::INT32), Params(Params), Ret(Ret) {}
+      : Type(TypeTag::FUNC), Params(Params), Ret(Ret) {}
 };
 
 #endif

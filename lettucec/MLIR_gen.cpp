@@ -28,8 +28,7 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
 
 //
 
-auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr)
-    -> mlir::IntegerType {
+auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr) -> mlir::Type {
   switch (Ty.Tag) {
   case TypeTag::INT32:
     return Buildr.getI32Type();

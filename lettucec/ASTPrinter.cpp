@@ -96,7 +96,7 @@ auto ASTPrinter::visit(const VarExpr &Node, std::any Context) -> std::any {
 
 auto ASTPrinter::visit(const CallExpr &Node, std::any Context) -> std::any {
   std::cout << GetPrefix(Context) << "CallExpr:"
-            << " " << Node.FuncName << "\n";
+            << " " << Node.FuncName << " .Type=" << getType(Node) << "\n";
   auto NewContext = IncrContext(Context);
   for (const auto &Arg : Node.Args) {
     Arg->accept(*this, NewContext);
