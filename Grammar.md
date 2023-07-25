@@ -5,7 +5,7 @@ prog ::= expr
 
 expr ::= 'let' name '=' expr 'in' expr
        | 'if' expr 'then' expr 'else' expr
-       | '\' param ( ',' param )* '.' expr
+       | '|' [ param ( ',' param )* ] '|' expr
        | logic
        | func_call
 
