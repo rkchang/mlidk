@@ -1,1 +1,3 @@
-let i = f(1+2, a) in i + 1
+let f = |x : i32, y : i32|
+    x + y
+in f(1+2, a)
