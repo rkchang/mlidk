@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct Location {
@@ -26,7 +27,11 @@ public:
   virtual std::any accept(ASTVisitor &Visitor, std::any Context) const = 0;
 };
 
-enum class ExprKind { LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR, CALL };
+//---------------------------------------------------------------------------//
+//                                Expressions                                //
+//---------------------------------------------------------------------------//
+
+enum class ExprKind { LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR, CALL, FUNC };
 
 class Expr : public ASTNode {
 public:
@@ -117,5 +122,15 @@ public:
 
   CallExpr(Location Loc, std::string FuncName,
            std::vector<std::unique_ptr<Expr>> Args);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
+class FuncExpr : public Expr {
+public:
+  std::vector<std::pair<std::string, Type>> Params;
+  std::unique_ptr<Expr> Body;
+
+  FuncExpr(Location Loc, std::vector<std::pair<std::string, Type>> Params,
+           std::unique_ptr<Expr> Body);
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };

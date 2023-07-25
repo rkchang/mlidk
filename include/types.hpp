@@ -16,7 +16,7 @@ struct Type {
   virtual ~Type() = default;
 
   auto operator==(Type &That) -> bool;
-  auto toString() -> std::string;
+  auto toString() -> std::string const;
 };
 
 struct VoidTClass : public Type {

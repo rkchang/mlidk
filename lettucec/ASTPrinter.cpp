@@ -1,6 +1,8 @@
 #include "ASTPrinter.hpp"
 #include "AST.fwd.hpp"
 #include "AST.hpp"
+#include "types.hpp"
+
 #include <iostream>
 #include <string>
 
@@ -101,5 +103,19 @@ auto ASTPrinter::visit(const CallExpr &Node, std::any Context) -> std::any {
   for (const auto &Arg : Node.Args) {
     Arg->accept(*this, NewContext);
   }
+  return NULL;
+}
+
+auto ASTPrinter::visit(const FuncExpr &Node, std::any Context) -> std::any {
+  std::cout << GetPrefix(Context) << "FuncExpr:"
+            << " .Type=" << getType(Node) << "\n";
+  auto NewContext = IncrContext(Context);
+  for (const auto &Param : Node.Params) {
+    auto Ty = Param.second;
+    std::cout << ".Param= " << Param.first << " : " << Ty.toString() << "\n";
+  }
+  std::cout << ".Body= "
+            << "\n";
+  Node.Body->accept(*this, NewContext);
   return NULL;
 }

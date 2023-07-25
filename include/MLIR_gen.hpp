@@ -28,6 +28,8 @@ public:
   auto visit(const BoolExpr &Node, std::any Context) -> std::any override;
   auto visit(const VarExpr &Node, std::any Context) -> std::any override;
   auto visit(const CallExpr &Node, std::any Context) -> std::any override;
+  auto visit(const FuncExpr &Node, std::any Context) -> std::any override;
+
   auto loc(const Location &Loc) -> mlir::Location;
 
   mlir::ModuleOp Module;

@@ -28,7 +28,7 @@ auto Type::operator==(Type &That) -> bool {
   }
 }
 
-auto Type::toString() -> std::string {
+auto Type::toString() -> std::string const {
   switch (Tag) {
   case TypeTag::INT32:
     return "i32";
