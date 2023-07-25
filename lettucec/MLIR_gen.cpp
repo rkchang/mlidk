@@ -41,7 +41,7 @@ auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr)
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
 
-  auto RetTy = lettuceTypeToMLIRType(Node.Exp->Ty.value(), Buildr);
+  auto RetTy = lettuceTypeToMLIRType(*(Node.Exp->Ty), Buildr);
   auto Ty = Buildr.getFunctionType(std::nullopt, {RetTy});
 
   auto Fun = Buildr.create<mlir::func::FuncOp>(Loc, "main", Ty);
@@ -67,7 +67,7 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
-  auto TR = mlir::TypeRange(lettuceTypeToMLIRType(Node.Ty.value(), Buildr));
+  auto TR = mlir::TypeRange(lettuceTypeToMLIRType(*Node.Ty, Buildr));
 
   // Compile condition first
   auto Cond =
@@ -114,7 +114,7 @@ auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
   auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
-  auto DataType = lettuceTypeToMLIRType(Node.Ty.value(), Buildr);
+  auto DataType = lettuceTypeToMLIRType(*Node.Ty, Buildr);
   switch (Node.Operator) {
   case TokenOp::OpType::ADD:
     return static_cast<mlir::Value>(

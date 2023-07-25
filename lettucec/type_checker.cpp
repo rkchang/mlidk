@@ -1,8 +1,10 @@
 #include "type_checker.hpp"
 #include "types.hpp"
 
+#include <memory>
+
 auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
-                        Expr &Rhs) -> Type {
+                        Expr &Rhs) -> std::shared_ptr<Type> {
   switch (Operator) {
     // Arithmetic
   case TokenOp::OpType::ADD:
@@ -44,7 +46,7 @@ auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
 }
 
 auto typeUnaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Rhs)
-    -> Type {
+    -> std::shared_ptr<Type> {
   switch (Operator) {
   case TokenOp::OpType::NOT:
     typeCheck(Ctx, Rhs, BoolT);
@@ -66,16 +68,16 @@ auto typeUnaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Rhs)
   }
 }
 
-auto typeCheck(TypeCtx Ctx, Expr &Exp, Type Expected) -> void {
+auto typeCheck(TypeCtx Ctx, Expr &Exp, std::shared_ptr<Type> Expected) -> void {
   auto Actual = typeInfer(Ctx, Exp);
   if (Actual != Expected) {
-    throw TypeError(Exp.Loc, "Expected " + Expected.toString() + ", but got " +
-                                 Actual.toString());
+    throw TypeError(Exp.Loc, "Expected " + Expected->toString() + ", but got " +
+                                 Actual->toString());
   }
   Exp.Ty = Actual;
 }
 
-auto typeInfer(TypeCtx Ctx, Expr &Exp) -> Type {
+auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
   switch (Exp.Kind) {
   case ExprKind::INT: {
     Exp.Ty = Int32T;

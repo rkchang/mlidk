@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <utility>
 
-using TypeCtx = std::unordered_map<std::string, Type>;
+using TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>;
 
 class TypeError : public UserError {
 public:
@@ -18,7 +18,7 @@ public:
                   "Type Error: " + Message){};
 };
 
-auto typeCheck(TypeCtx Ctx, Expr &Exp, Type Expected) -> void;
-auto typeInfer(TypeCtx Ctx, Expr &Exp) -> Type;
+auto typeCheck(TypeCtx Ctx, Expr &Exp, std::shared_ptr<Type> Expected) -> void;
+auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type>;
 
 #endif

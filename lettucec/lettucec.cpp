@@ -53,7 +53,7 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
     AST->accept(Printer, 0);
   }
 
-  auto TypeCtx = std::unordered_map<std::string, Type>();
+  auto TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>();
   typeInfer(TypeCtx, *(AST->Exp));
 
   if (Dbg) {
