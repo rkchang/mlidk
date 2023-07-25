@@ -82,6 +82,12 @@ auto Lexer::token() -> Token {
   case '/':
     step();
     return Token{TokenTag::SLASH, "/", Filename, StartLine, StartCol};
+  case '\\':
+    step();
+    return Token{TokenTag::BACKSLASH, "\\", Filename, StartLine, StartCol};
+  case '.':
+    step();
+    return Token{TokenTag::DOT, ".", Filename, StartLine, StartCol};
   case '=': {
     step();
     auto V = lookahead(0);

@@ -26,6 +26,8 @@ enum class TokenTag {
   RPAREN,
   COMMA,
   ARROW,
+  BACKSLASH,
+  DOT,
   // Keywords
   LET,
   IN,

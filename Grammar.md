@@ -5,8 +5,11 @@ prog ::= expr
 
 expr ::= 'let' name '=' expr 'in' expr
        | 'if' expr 'then' expr 'else' expr
+       | '\' param ( ',' param )* '.' expr
        | logic
        | func_call
+
+param ::= ident ':' type
 
 func_call ::= ident '(' [ expr ( ',' expr )* ] ')'
 
@@ -20,9 +23,7 @@ term ::= factor ( ( '+' | '-' ) factor )*
 
 factor ::= unary ( ( '*' | '/' ) unary )*
 
-unary ::= [ 'not' ] annotation
-
-annotation ::= primary [ ':' type ]
+unary ::= [ 'not' ] primary
 
 primary ::= '(' expr ')' | int | name | bool
 
