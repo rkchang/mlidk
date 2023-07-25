@@ -112,11 +112,18 @@ TEST(LexerTest, LexArrow) {
   EXPECT_EQ(Tok.Value, "->");
 }
 
-TEST(LexerTest, LexBackSlash) {
-  Lexer Lexer("\\", "hello.cpp");
+TEST(LexerTest, LexPipe) {
+  Lexer Lexer("|", "hello.cpp");
   Token Tok = Lexer.token();
-  EXPECT_EQ(Tok.Tag, TokenTag::BACKSLASH);
-  EXPECT_EQ(Tok.Value, "\\");
+  EXPECT_EQ(Tok.Tag, TokenTag::PIPE);
+  EXPECT_EQ(Tok.Value, "|");
+}
+
+TEST(LexerTest, LexColon) {
+  Lexer Lexer(":", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::COLON);
+  EXPECT_EQ(Tok.Value, ":");
 }
 
 TEST(LexerTest, LexDot) {
