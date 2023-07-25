@@ -6,11 +6,8 @@ prog ::= expr
 expr ::= 'let' name '=' expr 'in' expr
        | 'if' expr 'then' expr 'else' expr
        | logic
-       | func_def
        | func_call
 
-func_def ::= 'fun' '(' [ ident ( ',' ident )* ] ')' expr
-    
 func_call ::= ident '(' [ expr ( ',' expr )* ] ')'
 
 logic ::= equality ( ( 'and' | 'or' ) equality )*
@@ -23,11 +20,18 @@ term ::= factor ( ( '+' | '-' ) factor )*
 
 factor ::= unary ( ( '*' | '/' ) unary )*
 
-unary ::= [ 'not' ] primary
+unary ::= [ 'not' ] annotation
+
+annotation ::= primary [ ':' type ]
 
 primary ::= '(' expr ')' | int | name | bool
 
 bool ::= 'true' | 'false'
 int  ::= [0-9]+
 name ::= [a-z][a-zA-Z0-9_]*
+
+type ::= '(' [ type ( ',' type )* ] ')' '->' type
+       | 'i32'
+       | 'bool'
+       | 'void'
 ```

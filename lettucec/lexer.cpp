@@ -36,12 +36,13 @@ auto TokenOp::OpToStr(OpType Op) -> std::string {
 
 // All keywords in language
 const std::unordered_map<std::string, TokenTag> KeyWords = {
-    {"let", TokenTag::LET},     {"in", TokenTag::IN},
-    {"if", TokenTag::IF},       {"then", TokenTag::THEN},
-    {"else", TokenTag::ELSE},   {"true", TokenTag::BOOL},
-    {"false", TokenTag::BOOL},  {"and", TokenTag::AND},
-    {"or", TokenTag::OR},       {"not", TokenTag::NOT},
-    {"fun", TokenTag::FUNC_DEF}};
+    {"let", TokenTag::LET},      {"in", TokenTag::IN},
+    {"if", TokenTag::IF},        {"then", TokenTag::THEN},
+    {"else", TokenTag::ELSE},    {"true", TokenTag::BOOL},
+    {"false", TokenTag::BOOL},   {"and", TokenTag::AND},
+    {"or", TokenTag::OR},        {"not", TokenTag::NOT},
+    {"fun", TokenTag::FUN},      {"i32", TokenTag::I32},
+    {"bool", TokenTag::BOOL_KW}, {"void", TokenTag::VOID}};
 
 //--------
 // Lexer
@@ -66,9 +67,15 @@ auto Lexer::token() -> Token {
   case '+':
     step();
     return Token{TokenTag::PLUS, "+", Filename, StartLine, StartCol};
-  case '-':
+  case '-': {
     step();
+    auto V = lookahead(0);
+    if (V.value_or('\0') == '>') {
+      step();
+      return Token{TokenTag::ARROW, "->", Filename, StartLine, StartCol};
+    }
     return Token{TokenTag::MINUS, "-", Filename, StartLine, StartCol};
+  }
   case '*':
     step();
     return Token{TokenTag::STAR, "*", Filename, StartLine, StartCol};

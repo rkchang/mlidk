@@ -105,6 +105,13 @@ TEST(LexerTest, LexMinus) {
   EXPECT_EQ(Tok.Value, "-");
 }
 
+TEST(LexerTest, LexArrow) {
+  Lexer Lexer("->", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::ARROW);
+  EXPECT_EQ(Tok.Value, "->");
+}
+
 TEST(LexerTest, LexStar) {
   Lexer Lexer("*", "hello.cpp");
   Token Tok = Lexer.token();
@@ -180,6 +187,27 @@ TEST(LexerTest, LexNot) {
   Token Tok = Lexer.token();
   EXPECT_EQ(Tok.Tag, TokenTag::NOT);
   EXPECT_EQ(Tok.Value, "not");
+}
+
+TEST(LexerTest, LexI32) {
+  Lexer Lexer("i32", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::I32);
+  EXPECT_EQ(Tok.Value, "i32");
+}
+
+TEST(LexerTest, LexBool) {
+  Lexer Lexer("bool", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::BOOL_KW);
+  EXPECT_EQ(Tok.Value, "bool");
+}
+
+TEST(LexerTest, LexVoid) {
+  Lexer Lexer("void", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::VOID);
+  EXPECT_EQ(Tok.Value, "void");
 }
 
 TEST(LexerTest, LexMany) {

@@ -25,13 +25,18 @@ enum class TokenTag {
   LPAREN,
   RPAREN,
   COMMA,
+  ARROW,
   // Keywords
   LET,
   IN,
   IF,
   THEN,
   ELSE,
-  FUNC_DEF,
+  FUN,
+  // Types
+  I32,
+  BOOL_KW,
+  VOID,
   // Identifiers and literals
   INT,
   IDENT,
