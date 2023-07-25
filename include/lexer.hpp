@@ -24,12 +24,14 @@ enum class TokenTag {
   EQUAL,
   LPAREN,
   RPAREN,
+  COMMA,
   // Keywords
   LET,
   IN,
   IF,
   THEN,
   ELSE,
+  FUNC_DEF,
   // Identifiers and literals
   INT,
   IDENT,
@@ -85,6 +87,12 @@ public:
         : UserError(Filename, Line, Column, "Lexer Error: " + Message){};
   };
 
+  struct SrcLoc {
+    size_t Index;
+    int Line;
+    int Column;
+  };
+
   Lexer(std::string_view Source, std::string Filename);
 
   /**
@@ -98,14 +106,22 @@ public:
   auto peek() -> Token;
 
   /**
+   * Returns the current state of the Lexer
+   */
+  auto getState() -> SrcLoc const;
+
+  /**
+   * Sets the current state of the Lexer
+   */
+  auto setState(SrcLoc NewState) -> void;
+
+  /**
    * Returns true if input has been fully consumed
    */
   auto isDone() -> bool;
 
 private:
-  size_t Index;
-  int Line;
-  int Column;
+  SrcLoc State;
   const size_t Size;
   const std::string_view Source;
   const std::string Filename;

@@ -6,6 +6,12 @@ prog ::= expr
 expr ::= 'let' name '=' expr 'in' expr
        | 'if' expr 'then' expr 'else' expr
        | logic
+       | func_def
+       | func_call
+
+func_def ::= 'fun' '(' [ ident ( ',' ident )* ] ')' expr
+    
+func_call ::= ident '(' [ expr ( ',' expr )* ] ')'
 
 logic ::= equality ( ( 'and' | 'or' ) equality )*
 

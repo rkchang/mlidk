@@ -164,3 +164,25 @@ TEST(ParserTest, NestedLetExpr) {
   auto *Y = dynamic_cast<VarExpr *>(Let2Body->Right.get());
   EXPECT_NE(Y, nullptr) << "Expected VarExpr";
 }
+
+TEST(ParserTest, CallExpr) {
+  std::string Source = "let x = f(1+2, a) in x";
+  auto AST = genAST(Source);
+  auto *Let = dynamic_cast<LetExpr *>(AST.get());
+  EXPECT_NE(Let, nullptr) << "Expected LetExpr";
+
+  auto *LetValue = dynamic_cast<CallExpr *>(Let->Value.get());
+  EXPECT_NE(LetValue, nullptr) << "Expected CallExpr";
+
+  auto *CallExprArg0 = dynamic_cast<BinaryExpr *>(LetValue->Args[0].get());
+  EXPECT_NE(CallExprArg0, nullptr) << "Expected BinExpr";
+
+  auto *CallExprArg1 = dynamic_cast<VarExpr *>(LetValue->Args[1].get());
+  EXPECT_NE(CallExprArg1, nullptr) << "Expected VarExpr";
+
+  auto *One = dynamic_cast<IntExpr *>(CallExprArg0->Left.get());
+  EXPECT_NE(One, nullptr) << "Expected IntExpr";
+
+  auto *Two = dynamic_cast<IntExpr *>(CallExprArg0->Right.get());
+  EXPECT_NE(Two, nullptr) << "Expected IntExpr";
+}

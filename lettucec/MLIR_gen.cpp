@@ -1,5 +1,5 @@
 #include "MLIR_gen.hpp"
-#include "AST.fwd.hpp"
+#include "AST.hpp"
 #include "lexer.hpp"
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
@@ -29,20 +29,22 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
 
 //
 
-auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr)
-    -> mlir::IntegerType {
+auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr) -> mlir::Type {
   switch (Ty.Tag) {
   case TypeTag::INT32:
     return Buildr.getI32Type();
   case TypeTag::BOOL:
     return Buildr.getI1Type();
+  case TypeTag::VOID:
+  case TypeTag::FUNC:
+    throw MLIRGen::Error(Location{"", -1, -1}, "Unsupported type");
   }
 }
 
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
 
-  auto RetTy = lettuceTypeToMLIRType(Node.Exp->Ty.value(), Buildr);
+  auto RetTy = lettuceTypeToMLIRType(*(Node.Exp->Ty), Buildr);
   auto Ty = Buildr.getFunctionType(std::nullopt, {RetTy});
 
   auto Fun = Buildr.create<mlir::func::FuncOp>(Loc, "main", Ty);
@@ -68,7 +70,7 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
-  auto TR = mlir::TypeRange(lettuceTypeToMLIRType(Node.Ty.value(), Buildr));
+  auto TR = mlir::TypeRange(lettuceTypeToMLIRType(*Node.Ty, Buildr));
 
   // Compile condition first
   auto Cond =
@@ -115,7 +117,7 @@ auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
   auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
-  auto DataType = lettuceTypeToMLIRType(Node.Ty.value(), Buildr);
+  auto DataType = lettuceTypeToMLIRType(*Node.Ty, Buildr);
   switch (Node.Operator) {
   case TokenOp::OpType::ADD:
     return static_cast<mlir::Value>(
@@ -214,4 +216,9 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
     return Variable;
   }
   throw Error(Node.Loc, "Unknown variable reference: " + Node.Name);
+}
+
+auto MLIRGen::visit(const CallExpr &Node, std::any) -> std::any {
+  throw UserError(Node.Loc.Filename, Node.Loc.Line, Node.Loc.Column,
+                  "unimplemented");
 }

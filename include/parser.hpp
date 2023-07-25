@@ -19,6 +19,7 @@ public:
 
 private:
   auto expression() -> std::unique_ptr<Expr>;
+  auto func_call(Token FuncIdent) -> std::unique_ptr<Expr>;
   auto logic() -> std::unique_ptr<Expr>;
   auto equality() -> std::unique_ptr<Expr>;
   auto comparisson() -> std::unique_ptr<Expr>;
@@ -26,11 +27,14 @@ private:
   auto factor() -> std::unique_ptr<Expr>;
   auto unary() -> std::unique_ptr<Expr>;
   auto primary() -> std::unique_ptr<Expr>;
+  // Accepts a consecutive sequence of tokens
+  auto chain_accept(std::initializer_list<TokenTag> Tags)
+      -> std::optional<std::vector<Token>>;
   // Accepts a token from a list
   auto accept(std::initializer_list<TokenTag> Tags) -> std::optional<Token>;
   // Expects a token from a list. Throws if not found!
   auto expect(std::initializer_list<TokenTag> Tags) -> Token;
-  auto check(TokenTag Tag) -> bool;
+  auto check(std::initializer_list<TokenTag> Tags) -> bool;
 
   // Helpers
   auto letExpression(Token StartToken) -> std::unique_ptr<Expr>;

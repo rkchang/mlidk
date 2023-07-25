@@ -1,8 +1,14 @@
 #include "type_checker.hpp"
+#include "AST.fwd.hpp"
 #include "types.hpp"
 
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <vector>
+
 auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
-                        Expr &Rhs) -> Type {
+                        Expr &Rhs) -> std::shared_ptr<Type> {
   switch (Operator) {
     // Arithmetic
   case TokenOp::OpType::ADD:
@@ -44,7 +50,7 @@ auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
 }
 
 auto typeUnaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Rhs)
-    -> Type {
+    -> std::shared_ptr<Type> {
   switch (Operator) {
   case TokenOp::OpType::NOT:
     typeCheck(Ctx, Rhs, BoolT);
@@ -66,16 +72,17 @@ auto typeUnaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Rhs)
   }
 }
 
-auto typeCheck(TypeCtx Ctx, Expr &Exp, Type Expected) -> void {
+auto typeCheck(TypeCtx Ctx, Expr &Exp, std::shared_ptr<Type> Expected) -> void {
   auto Actual = typeInfer(Ctx, Exp);
-  if (Actual != Expected) {
-    throw TypeError(Exp.Loc, "Expected " + Expected.toString() + ", but got " +
-                                 Actual.toString());
+  // Compare underlying Type value!
+  if (*Actual != *Expected) {
+    throw TypeError(Exp.Loc, "Expected " + Expected->toString() + ", but got " +
+                                 Actual->toString());
   }
   Exp.Ty = Actual;
 }
 
-auto typeInfer(TypeCtx Ctx, Expr &Exp) -> Type {
+auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
   switch (Exp.Kind) {
   case ExprKind::INT: {
     Exp.Ty = Int32T;
@@ -118,10 +125,36 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> Type {
     Exp.Ty = Ty;
     return Ty;
   }
-  case ExprKind::UN_OP:
+  case ExprKind::UN_OP: {
     auto *E = static_cast<UnaryExpr *>(&Exp);
     auto Ty = typeUnaryOperator(Ctx, E->Operator, *(E->Right));
     Exp.Ty = Ty;
     return Ty;
+  }
+  case ExprKind::CALL: {
+    auto *E = static_cast<CallExpr *>(&Exp);
+    auto T = typeInfer(Ctx, *(std::make_unique<VarExpr>(Exp.Loc, E->FuncName)));
+    if (T->Tag != TypeTag::FUNC) {
+      throw TypeError(Exp.Loc,
+                      "Cannot call expression of type " + T->toString());
+    }
+
+    auto *FuncTy = static_cast<FuncT *>(T.get());
+    auto ParamsSize = FuncTy->Params.size();
+    auto ArgsSize = E->Args.size();
+    if (ParamsSize != ArgsSize) {
+      throw TypeError(Exp.Loc, "Expected " + std::to_string(ParamsSize) +
+                                   " parameters, but got " +
+                                   std::to_string(ArgsSize) + " arguments");
+    }
+
+    for (size_t Idx = 0; Idx < ParamsSize; Idx++) {
+      typeCheck(Ctx, *(E->Args[Idx]),
+                std::make_shared<Type>(FuncTy->Params[Idx]));
+    }
+
+    Exp.Ty = FuncTy->Ret;
+    return FuncTy->Ret;
+  }
   }
 }

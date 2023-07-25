@@ -4,9 +4,11 @@
 #include "parser.hpp"
 #include "passes.hpp"
 #include "type_checker.hpp"
+#include "types.hpp"
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <unordered_map>
 
 #include <mlir/Dialect/Arith/IR/Arith.h>
@@ -20,6 +22,7 @@
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
+#include <vector>
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
@@ -53,7 +56,8 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
     AST->accept(Printer, 0);
   }
 
-  auto TypeCtx = std::unordered_map<std::string, Type>();
+  auto TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>{};
+
   typeInfer(TypeCtx, *(AST->Exp));
 
   if (Dbg) {

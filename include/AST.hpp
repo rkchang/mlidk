@@ -5,9 +5,11 @@
 #include "types.hpp"
 
 #include <any>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 struct Location {
   std::string Filename; // TODO: make shared_ptr
@@ -24,13 +26,13 @@ public:
   virtual std::any accept(ASTVisitor &Visitor, std::any Context) const = 0;
 };
 
-enum class ExprKind { LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR };
+enum class ExprKind { LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR, CALL };
 
 class Expr : public ASTNode {
 public:
   const ExprKind Kind;
-  std::optional<Type> Ty;
-  Expr(Location Loc, ExprKind Kind) : ASTNode(Loc), Kind(Kind) {}
+  std::shared_ptr<Type> Ty;
+  Expr(Location Loc, ExprKind Kind) : ASTNode(Loc), Kind(Kind), Ty(nullptr) {}
 };
 
 class RootNode : public ASTNode {
@@ -105,5 +107,15 @@ public:
   std::string Name;
 
   VarExpr(Location Loc, std::string Name);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
+class CallExpr : public Expr {
+public:
+  std::string FuncName;
+  std::vector<std::unique_ptr<Expr>> Args;
+
+  CallExpr(Location Loc, std::string FuncName,
+           std::vector<std::unique_ptr<Expr>> Args);
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };
