@@ -1,4 +1,5 @@
 #include "MLIR_gen.hpp"
+#include "AST.hpp"
 #include "lexer.hpp"
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
@@ -34,6 +35,9 @@ auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr) -> mlir::Type {
     return Buildr.getI32Type();
   case TypeTag::BOOL:
     return Buildr.getI1Type();
+  case TypeTag::VOID:
+  case TypeTag::FUNC:
+    throw MLIRGen::Error(Location{"", -1, -1}, "Unsupported type");
   }
 }
 

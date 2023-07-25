@@ -2,9 +2,10 @@
 #include <string>
 
 auto Type::operator==(Type &That) -> bool {
-  switch (this->Tag) {
+  switch (Tag) {
   case TypeTag::INT32:
   case TypeTag::BOOL:
+  case TypeTag::VOID:
     return this->Tag == That.Tag;
   case TypeTag::FUNC:
     if (this->Tag != That.Tag) {
@@ -33,6 +34,8 @@ auto Type::toString() -> std::string {
     return "i32";
   case TypeTag::BOOL:
     return "bool";
+  case TypeTag::VOID:
+    return "void";
   case TypeTag::FUNC: {
     auto *Self = static_cast<FuncT *>(this);
     std::string S = "(";

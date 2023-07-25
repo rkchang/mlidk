@@ -56,8 +56,7 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
     AST->accept(Printer, 0);
   }
 
-  auto TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>{
-      {"print", std::make_shared<FuncT>(std::vector<Type>(), VoidT)}};
+  auto TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>{};
 
   typeInfer(TypeCtx, *(AST->Exp));
 

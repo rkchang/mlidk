@@ -74,7 +74,8 @@ auto typeUnaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Rhs)
 
 auto typeCheck(TypeCtx Ctx, Expr &Exp, std::shared_ptr<Type> Expected) -> void {
   auto Actual = typeInfer(Ctx, Exp);
-  if (Actual != Expected) {
+  // Compare underlying Type value!
+  if (*Actual != *Expected) {
     throw TypeError(Exp.Loc, "Expected " + Expected->toString() + ", but got " +
                                  Actual->toString());
   }
@@ -137,6 +138,7 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
       throw TypeError(Exp.Loc,
                       "Cannot call expression of type " + T->toString());
     }
+
     auto *FuncTy = static_cast<FuncT *>(T.get());
     auto ParamsSize = FuncTy->Params.size();
     auto ArgsSize = E->Args.size();
