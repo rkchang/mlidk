@@ -1,4 +1,5 @@
 #include "AST.fwd.hpp"
+#include "AST.hpp"
 #include "ASTPrinter.hpp"
 #include "parser.hpp"
 #include <deque>
@@ -185,4 +186,43 @@ TEST(ParserTest, CallExpr) {
 
   auto *Two = dynamic_cast<IntExpr *>(CallExprArg0->Right.get());
   EXPECT_NE(Two, nullptr) << "Expected IntExpr";
+}
+
+TEST(ParserTest, FuncExprNoParams) {
+  std::string Source = "|| 1";
+  auto AST = genAST(Source);
+  auto *Func = dynamic_cast<FuncExpr *>(AST.get());
+  EXPECT_NE(Func, nullptr) << "Expected FuncExpr";
+
+  auto Params = Func->Params;
+  EXPECT_EQ(Params.size(), 0) << "Expected 0 Parameters";
+
+  auto *Body = dynamic_cast<IntExpr *>(Func->Body.get());
+  EXPECT_NE(Body, nullptr) << "Expected IntExpr";
+}
+
+TEST(ParserTest, FuncExprOneParam) {
+  std::string Source = "|x: i32| 1";
+  auto AST = genAST(Source);
+  auto *Func = dynamic_cast<FuncExpr *>(AST.get());
+  EXPECT_NE(Func, nullptr) << "Expected FuncExpr";
+
+  auto Params = Func->Params;
+  EXPECT_EQ(Params.size(), 1) << "Expected 1 Parameter";
+
+  auto *Body = dynamic_cast<IntExpr *>(Func->Body.get());
+  EXPECT_NE(Body, nullptr) << "Expected IntExpr";
+}
+
+TEST(ParserTest, FuncExprTwoParams) {
+  std::string Source = "|x: i32, y: i32| 1";
+  auto AST = genAST(Source);
+  auto *Func = dynamic_cast<FuncExpr *>(AST.get());
+  EXPECT_NE(Func, nullptr) << "Expected FuncExpr";
+
+  auto Params = Func->Params;
+  EXPECT_EQ(Params.size(), 2) << "Expected 2 Parameters";
+
+  auto *Body = dynamic_cast<IntExpr *>(Func->Body.get());
+  EXPECT_NE(Body, nullptr) << "Expected IntExpr";
 }

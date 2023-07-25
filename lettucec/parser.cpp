@@ -1,7 +1,11 @@
 #include "parser.hpp"
 #include "AST.hpp"
 #include "lexer.hpp"
+#include "types.hpp"
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 // TODO: EOI?
 
 Parser::Parser(Lexer &Lex) : Lex(Lex) {}
@@ -17,6 +21,9 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
   }
   if (auto IfOpt = accept({TokenTag::IF})) {
     return ifExpression(IfOpt.value());
+  }
+  if (auto PipeOpt = accept({TokenTag::PIPE})) {
+    return funcLit(PipeOpt.value());
   }
   if (auto FuncCallOpt = chainAccept({TokenTag::IDENT, TokenTag::LPAREN})) {
     return funcCall(FuncCallOpt.value()[0]);
@@ -118,6 +125,13 @@ auto Parser::primary() -> std::unique_ptr<Expr> {
   throw Error(Lex.peek());
 }
 
+auto Parser::identifier() -> std::string {
+  if (auto V = accept({TokenTag::IDENT})) {
+    return V->Value;
+  }
+  throw Error(Lex.peek());
+}
+
 // expression helpers
 
 auto Parser::letExpression(Token StartToken) -> std::unique_ptr<Expr> {
@@ -156,6 +170,64 @@ auto Parser::funcCall(Token FuncIdent) -> std::unique_ptr<Expr> {
   expect({TokenTag::RPAREN});
   const Location Loc = {FuncIdent.Filename, FuncIdent.Line, FuncIdent.Column};
   return std::make_unique<CallExpr>(Loc, FuncIdent.Value, std::move(Args));
+}
+
+auto Parser::funcLit(Token StartToken) -> std::unique_ptr<Expr> {
+  auto Params = std::vector<std::pair<std::string, Type>>();
+  if (!check({TokenTag::PIPE})) {
+    auto Name = identifier();
+    expect({TokenTag::COLON});
+    auto Ty = type();
+    auto Param = std::make_pair(Name, *Ty);
+    Params.push_back(Param);
+
+    while (accept({TokenTag::COMMA})) {
+      auto Name = identifier();
+      expect({TokenTag::COLON});
+      auto Ty = type();
+      auto Param = std::make_pair(Name, *Ty);
+      Params.push_back(Param);
+    }
+  }
+  expect({TokenTag::PIPE});
+
+  auto Body = expression();
+
+  const Location Loc = {StartToken.Filename, StartToken.Line,
+                        StartToken.Column};
+  return std::make_unique<FuncExpr>(Loc, Params, std::move(Body));
+}
+
+//
+
+auto Parser::type() -> std::shared_ptr<Type> {
+  if (auto T = accept({TokenTag::I32, TokenTag::BOOL_KW, TokenTag::VOID,
+                       TokenTag::LPAREN})) {
+    switch (T.value().Tag) {
+    case TokenTag::I32:
+      return Int32T;
+    case TokenTag::BOOL_KW:
+      return BoolT;
+    case TokenTag::VOID:
+      return VoidT;
+    case TokenTag::LPAREN: {
+      auto Params = std::vector<Type>();
+      if (!accept({TokenTag::RPAREN})) {
+        Params.push_back(*type());
+        while (accept({TokenTag::COMMA})) {
+          Params.push_back(*type());
+        }
+      }
+      expect({TokenTag::RPAREN});
+      expect({TokenTag::ARROW});
+      auto Ret = type();
+      return std::make_shared<FuncT>(Params, Ret);
+    }
+    default:
+      break;
+    }
+  }
+  throw Error(Lex.peek());
 }
 
 //

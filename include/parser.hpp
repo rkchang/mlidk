@@ -2,6 +2,7 @@
 
 #include "AST.hpp"
 #include "lexer.hpp"
+#include "types.hpp"
 #include <memory>
 #include <optional>
 
@@ -19,7 +20,6 @@ public:
 
 private:
   auto expression() -> std::unique_ptr<Expr>;
-  auto func_call(Token FuncIdent) -> std::unique_ptr<Expr>;
   auto logic() -> std::unique_ptr<Expr>;
   auto equality() -> std::unique_ptr<Expr>;
   auto comparisson() -> std::unique_ptr<Expr>;
@@ -27,8 +27,11 @@ private:
   auto factor() -> std::unique_ptr<Expr>;
   auto unary() -> std::unique_ptr<Expr>;
   auto primary() -> std::unique_ptr<Expr>;
+
+  auto type() -> std::shared_ptr<Type>;
+
   // Accepts a consecutive sequence of tokens
-  auto chain_accept(std::initializer_list<TokenTag> Tags)
+  auto chainAccept(std::initializer_list<TokenTag> Tags)
       -> std::optional<std::vector<Token>>;
   // Accepts a token from a list
   auto accept(std::initializer_list<TokenTag> Tags) -> std::optional<Token>;
@@ -39,6 +42,10 @@ private:
   // Helpers
   auto letExpression(Token StartToken) -> std::unique_ptr<Expr>;
   auto ifExpression(Token StartToken) -> std::unique_ptr<Expr>;
+  auto funcCall(Token FuncIdent) -> std::unique_ptr<Expr>;
+  auto funcLit(Token StartToken) -> std::unique_ptr<Expr>;
+
+  auto identifier() -> std::string;
 
   Lexer &Lex;
 };

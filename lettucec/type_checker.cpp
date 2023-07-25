@@ -156,5 +156,7 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
     Exp.Ty = FuncTy->Ret;
     return FuncTy->Ret;
   }
+  case ExprKind::FUNC:
+    throw TypeError(Exp.Loc, "Unimplemented");
   }
 }
