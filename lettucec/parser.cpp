@@ -18,24 +18,10 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
   if (auto IfOpt = accept({TokenTag::IF})) {
     return ifExpression(IfOpt.value());
   }
-  if (auto FuncCallOpt = chain_accept({TokenTag::IDENT, TokenTag::LPAREN})) {
-    return func_call(FuncCallOpt.value()[0]);
+  if (auto FuncCallOpt = chainAccept({TokenTag::IDENT, TokenTag::LPAREN})) {
+    return funcCall(FuncCallOpt.value()[0]);
   }
   return logic();
-}
-
-auto Parser::func_call(Token FuncIdent) -> std::unique_ptr<Expr> {
-  // Get arguments
-  std::vector<std::unique_ptr<Expr>> Args;
-  if (!check({TokenTag::RPAREN})) {
-    Args.push_back(expression());
-    while (accept({TokenTag::COMMA})) {
-      Args.push_back(expression());
-    }
-  }
-  expect({TokenTag::RPAREN});
-  const Location Loc = {FuncIdent.Filename, FuncIdent.Line, FuncIdent.Column};
-  return std::make_unique<CallExpr>(Loc, FuncIdent.Value, std::move(Args));
 }
 
 auto Parser::logic() -> std::unique_ptr<Expr> {
@@ -158,9 +144,23 @@ auto Parser::ifExpression(Token StartToken) -> std::unique_ptr<Expr> {
                                   std::move(InExpr));
 }
 
+auto Parser::funcCall(Token FuncIdent) -> std::unique_ptr<Expr> {
+  // Get arguments
+  std::vector<std::unique_ptr<Expr>> Args;
+  if (!check({TokenTag::RPAREN})) {
+    Args.push_back(expression());
+    while (accept({TokenTag::COMMA})) {
+      Args.push_back(expression());
+    }
+  }
+  expect({TokenTag::RPAREN});
+  const Location Loc = {FuncIdent.Filename, FuncIdent.Line, FuncIdent.Column};
+  return std::make_unique<CallExpr>(Loc, FuncIdent.Value, std::move(Args));
+}
+
 //
 
-auto Parser::chain_accept(std::initializer_list<TokenTag> Tags)
+auto Parser::chainAccept(std::initializer_list<TokenTag> Tags)
     -> std::optional<std::vector<Token>> {
   auto OldState = Lex.getState();
   std::vector<Token> Accepted;
