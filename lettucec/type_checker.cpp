@@ -176,7 +176,7 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
     }
 
     auto BodyTy = typeInfer(Ctx, *E->Body);
-    auto FuncTy = std::make_shared<Type>(FuncT(ParamTypes, BodyTy));
+    auto FuncTy = std::make_shared<FuncT>(ParamTypes, BodyTy);
 
     // Remove parameters from context
     for (auto &ParamName : ParamNames) {

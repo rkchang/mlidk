@@ -10,6 +10,7 @@
 #include <iostream>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
@@ -22,7 +23,6 @@
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
-#include <vector>
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
