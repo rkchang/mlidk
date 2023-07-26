@@ -2,6 +2,7 @@
 #include "AST.hpp"
 #include "lexer.hpp"
 
+#include <llvm/ADT/StringRef.h>
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
@@ -262,31 +263,34 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
 
 auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
   auto Func = SymbolTable.lookup(Node.FuncName);
-  auto Args = std::vector<mlir::Value>();
 
+  // Generate code for every argument and store it in a ValueRange
+  auto Args = std::vector<mlir::Value>();
   for (auto &Arg : Node.Args) {
     auto Res = std::any_cast<mlir::Value>(Arg->accept(*this, Context));
     Args.push_back(Res);
   }
-
   auto VR = mlir::ValueRange(Args);
 
+  // TODO: Call direct?
+  // We call the function indirectly because we are storing it in an SSA
+  // variable using a func.constant operation
   auto Call =
       Buildr.create<mlir::func::CallIndirectOp>(loc(Node.Loc), Func, VR);
-
-  // TODO: Call direct?
 
   return static_cast<mlir::Value>(Call->getResult(0));
 }
 
 auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
-
+  // For some reason we have to generate functions at the module top-level
   auto IP = Buildr.saveInsertionPoint();
-
   Buildr.setInsertionPointToStart(Module.getBody());
 
+  // Note how we need to generate a mlir::FunctionType, not mlir::Type,
+  // otherwise the overload resolution for FuncOp.build won't work
   auto FuncTy = lettuceTypeToMLIRFunctionType(*Node.Ty, Buildr);
 
+  // Store all function parameters as typed and named attributes
   auto ParamsTy = std::vector<mlir::NamedAttribute>();
   for (auto &Param : Node.Params) {
     auto Name = Param.first;
@@ -298,33 +302,40 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
   }
   auto ParamsTyAttr = mlir::ArrayRef<mlir::NamedAttribute>(ParamsTy);
 
+  // Create a FuncOp with a fresh name
   auto Loc = loc(Node.Loc);
   auto Func = Buildr.create<mlir::func::FuncOp>(Loc, freshName("func$"), FuncTy,
                                                 ParamsTyAttr);
 
-  // TODO: New scope?
+  // Create new scope for function body
   auto Scope =
       llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value>(SymbolTable);
 
+  // Create function body, and move insertion point
   Func.addEntryBlock();
   auto *FuncBody = &Func.getBody();
   Buildr.setInsertionPointToStart(&FuncBody->front());
 
-  // TODO: Params?
+  // Insert every parameter into the symbol table
   auto Idx = 0;
   for (auto &Param : Node.Params) {
-    // TODO: ParamName is somehow used after scope?!
-    auto ParamName = Param.first;
+    // For some reason ParamName must be initialized as a llvm::StringRef
+    // (instead of using a implicit conversion like in LetExpr)
+    // otherwise we get an AddressSanitizer error
+    auto ParamName = llvm::StringRef(Param.first);
     auto ParamVal = static_cast<mlir::Value>(Func.getArgument(Idx));
     SymbolTable.insert(ParamName, ParamVal);
     Idx++;
   }
 
+  // Generate body, and insert a ReturnOp with the resulting value
   auto Body = std::any_cast<mlir::Value>(Node.Body->accept(*this, Context));
   Buildr.create<mlir::func::ReturnOp>(loc(Node.Body->Loc), Body);
 
+  // Restore insertion point
   Buildr.restoreInsertionPoint(IP);
 
+  // Create a reference to the function we just created
   auto Res = Buildr.create<mlir::func::ConstantOp>(loc(Node.Body->Loc), FuncTy,
                                                    Func.getSymName());
 
