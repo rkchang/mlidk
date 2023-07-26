@@ -5,15 +5,20 @@
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
+#include <mlir/IR/Attributes.h>
 #include <mlir/IR/Builders.h>
+#include <mlir/IR/BuiltinAttributes.h>
 #include <mlir/IR/BuiltinTypes.h>
 #include <mlir/IR/TypeRange.h>
+#include <mlir/IR/Types.h>
 #include <mlir/IR/Value.h>
+#include <mlir/IR/ValueRange.h>
 #include <mlir/Support/LLVM.h>
 
 #include <any>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
@@ -255,9 +260,19 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
   throw Error(Node.Loc, "Unknown variable reference: " + Node.Name);
 }
 
-auto MLIRGen::visit(const CallExpr &Node, std::any) -> std::any {
+auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
   auto Func = SymbolTable.lookup(Node.FuncName);
-  auto Call = Buildr.create<mlir::func::CallIndirectOp>(loc(Node.Loc), Func);
+  auto Args = std::vector<mlir::Value>();
+
+  for (auto &Arg : Node.Args) {
+    auto Res = std::any_cast<mlir::Value>(Arg->accept(*this, Context));
+    Args.push_back(Res);
+  }
+
+  auto VR = mlir::ValueRange(Args);
+
+  auto Call =
+      Buildr.create<mlir::func::CallIndirectOp>(loc(Node.Loc), Func, VR);
 
   // TODO: Arguments
   // TODO: Call direct?
@@ -272,10 +287,33 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
   Buildr.setInsertionPointToStart(Module.getBody());
 
   auto Ty = lettuceTypeToMLIRFunctionType(*Node.Ty, Buildr);
+
+  auto ParamsTy = std::vector<mlir::NamedAttribute>();
+  for (auto &Param : Node.Params) {
+    auto Name = Param.first;
+    auto Ty = Param.second;
+    auto ParamName = Buildr.getStringAttr(Name);
+    auto ParamTy = lettuceTypeToMLIRType(Ty, Buildr);
+    auto ParamTyAttr = mlir::TypeAttr::get(ParamTy);
+    ParamsTy.push_back(mlir::NamedAttribute(ParamName, ParamTyAttr));
+  }
+  auto ParamsTyAttr = mlir::ArrayRef<mlir::NamedAttribute>(ParamsTy);
+
   auto Loc = loc(Node.Loc);
-  auto Func = Buildr.create<mlir::func::FuncOp>(Loc, getId("func$"), Ty);
+  auto Func =
+      Buildr.create<mlir::func::FuncOp>(Loc, getId("func$"), Ty, ParamsTyAttr);
 
   // TODO: New scope?
+  auto Scope =
+      llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value>(SymbolTable);
+
+  //  auto Idx = 0;
+  //  for (auto &Param : Node.Params) {
+  //    auto ParamName = Param.first;
+  //    auto Ty = Param.second;
+  //    SymbolTable.insert(ParamName, Func.getArgument(Idx));
+  //  }
+
   // TODO: Params?
 
   Func.addEntryBlock();
