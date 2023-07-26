@@ -17,9 +17,7 @@
 #include <mlir/Support/LLVM.h>
 
 #include <any>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
@@ -43,9 +41,20 @@ auto MLIRGen::freshName(std::string Prefix) -> std::string {
   return Prefix + std::to_string(Id);
 }
 
-//
+// Type converters
 
-auto lettuceTypeToMLIRType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
+auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type;
+
+auto mlirFunctionType(FuncT &Ty, mlir::OpBuilder Buildr) -> mlir::FunctionType {
+  auto Params = std::vector<mlir::Type>();
+  for (auto &Param : Ty.Params) {
+    Params.push_back(mlirType(Param, Buildr));
+  }
+  auto Ret = mlirType(*Ty.Ret, Buildr);
+  return Buildr.getFunctionType(Params, Ret);
+}
+
+auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
   switch (Ty.Tag) {
   case TypeTag::INT32:
     return Buildr.getI32Type();
@@ -53,41 +62,19 @@ auto lettuceTypeToMLIRType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
     return Buildr.getI1Type();
   case TypeTag::FUNC: {
     auto *T = static_cast<FuncT *>(&Ty);
-    auto Params = std::vector<mlir::Type>();
-    for (auto &Param : T->Params) {
-      Params.push_back(lettuceTypeToMLIRType(Param, Buildr));
-    }
-    auto Ret = lettuceTypeToMLIRType(*T->Ret, Buildr);
-    return Buildr.getFunctionType(Params, Ret);
+    return mlirFunctionType(*T, Buildr);
   }
   case TypeTag::VOID:
     throw "Unsupported";
   }
 }
 
-auto lettuceTypeToMLIRFunctionType(Type &Ty, mlir::OpBuilder Buildr)
-    -> mlir::FunctionType {
-  switch (Ty.Tag) {
-  case TypeTag::FUNC: {
-    auto *T = static_cast<FuncT *>(&Ty);
-    auto Params = std::vector<mlir::Type>();
-    for (auto &Param : T->Params) {
-      Params.push_back(lettuceTypeToMLIRType(Param, Buildr));
-    }
-    auto Ret = lettuceTypeToMLIRType(*T->Ret, Buildr);
-    return Buildr.getFunctionType(Params, Ret);
-  }
-  case TypeTag::INT32:
-  case TypeTag::BOOL:
-  case TypeTag::VOID:
-    throw "Unsupported";
-  }
-}
+//
 
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
 
-  auto RetTy = lettuceTypeToMLIRType(*(Node.Exp->Ty), Buildr);
+  auto RetTy = mlirType(*(Node.Exp->Ty), Buildr);
   auto Ty = Buildr.getFunctionType(std::nullopt, {RetTy});
 
   auto Fun = Buildr.create<mlir::func::FuncOp>(Loc, "main", Ty);
@@ -113,7 +100,7 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
-  auto TR = mlir::TypeRange(lettuceTypeToMLIRType(*Node.Ty, Buildr));
+  auto TR = mlir::TypeRange(mlirType(*Node.Ty, Buildr));
 
   // Compile condition first
   auto Cond =
@@ -160,7 +147,7 @@ auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
   auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
-  auto DataType = lettuceTypeToMLIRType(*Node.Ty, Buildr);
+  auto DataType = mlirType(*Node.Ty, Buildr);
   switch (Node.Operator) {
   case TokenOp::OpType::ADD:
     return static_cast<mlir::Value>(
@@ -288,7 +275,8 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
 
   // Note how we need to generate a mlir::FunctionType, not mlir::Type,
   // otherwise the overload resolution for FuncOp.build won't work
-  auto FuncTy = lettuceTypeToMLIRFunctionType(*Node.Ty, Buildr);
+  auto *T = static_cast<FuncT *>(Node.Ty.get());
+  auto FuncTy = mlirFunctionType(*T, Buildr);
 
   // Store all function parameters as typed and named attributes
   auto ParamsTy = std::vector<mlir::NamedAttribute>();
@@ -296,7 +284,7 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
     auto Name = Param.first;
     auto Ty = Param.second;
     auto ParamName = Buildr.getStringAttr(Name);
-    auto ParamTy = lettuceTypeToMLIRType(Ty, Buildr);
+    auto ParamTy = mlirType(Ty, Buildr);
     auto ParamTyAttr = mlir::TypeAttr::get(ParamTy);
     ParamsTy.push_back(mlir::NamedAttribute(ParamName, ParamTyAttr));
   }
