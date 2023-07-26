@@ -2,14 +2,19 @@
 #include "AST.hpp"
 #include "lexer.hpp"
 
-#include "mlir/Dialect/Arith/IR/Arith.h"
-#include "mlir/Dialect/Func/IR/FuncOps.h"
-#include "mlir/Dialect/SCF/IR/SCF.h"
+#include <mlir/Dialect/Arith/IR/Arith.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/IR/Builders.h>
+#include <mlir/IR/BuiltinTypes.h>
 #include <mlir/IR/TypeRange.h>
 #include <mlir/IR/Value.h>
+#include <mlir/Support/LLVM.h>
 
 #include <any>
+#include <memory>
+#include <string>
+#include <vector>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
     : std::runtime_error(Loc.Filename + ":" + std::to_string(Loc.Line) + ":" +
@@ -29,15 +34,42 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
 
 //
 
-auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr) -> mlir::Type {
+auto lettuceTypeToMLIRType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
   switch (Ty.Tag) {
   case TypeTag::INT32:
     return Buildr.getI32Type();
   case TypeTag::BOOL:
     return Buildr.getI1Type();
+  case TypeTag::FUNC: {
+    auto *T = static_cast<FuncT *>(&Ty);
+    auto Params = std::vector<mlir::Type>();
+    for (auto &Param : T->Params) {
+      Params.push_back(lettuceTypeToMLIRType(Param, Buildr));
+    }
+    auto Ret = lettuceTypeToMLIRType(*T->Ret, Buildr);
+    return Buildr.getFunctionType(Params, Ret);
+  }
   case TypeTag::VOID:
-  case TypeTag::FUNC:
-    throw MLIRGen::Error(Location{"", -1, -1}, "Unsupported type");
+    throw "Unsupported";
+  }
+}
+
+auto lettuceTypeToMLIRFunctionType(Type &Ty, mlir::OpBuilder Buildr)
+    -> mlir::FunctionType {
+  switch (Ty.Tag) {
+  case TypeTag::FUNC: {
+    auto *T = static_cast<FuncT *>(&Ty);
+    auto Params = std::vector<mlir::Type>();
+    for (auto &Param : T->Params) {
+      Params.push_back(lettuceTypeToMLIRType(Param, Buildr));
+    }
+    auto Ret = lettuceTypeToMLIRType(*T->Ret, Buildr);
+    return Buildr.getFunctionType(Params, Ret);
+  }
+  case TypeTag::INT32:
+  case TypeTag::BOOL:
+  case TypeTag::VOID:
+    throw "Unsupported";
   }
 }
 
@@ -223,7 +255,30 @@ auto MLIRGen::visit(const CallExpr &Node, std::any) -> std::any {
                   "unimplemented");
 }
 
-auto MLIRGen::visit(const FuncExpr &Node, std::any) -> std::any {
-  throw UserError(Node.Loc.Filename, Node.Loc.Line, Node.Loc.Column,
-                  "unimplemented");
+auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
+
+  auto IP = Buildr.saveInsertionPoint();
+
+  Buildr.setInsertionPointToStart(Module.getBody());
+
+  auto Ty = lettuceTypeToMLIRFunctionType(*Node.Ty, Buildr);
+  auto Loc = loc(Node.Loc);
+  auto Func = Buildr.create<mlir::func::FuncOp>(Loc, "func_name", Ty);
+
+  // TODO: Params?
+  // TODO: New scope?
+
+  Func.addEntryBlock();
+  auto *FuncBody = &Func.getBody();
+  Buildr.setInsertionPointToStart(&FuncBody->front());
+
+  auto Body = std::any_cast<mlir::Value>(Node.Body->accept(*this, Context));
+  Buildr.create<mlir::func::ReturnOp>(loc(Node.Body->Loc), Body);
+
+  Buildr.restoreInsertionPoint(IP);
+
+  auto Res = Buildr.create<mlir::func::ConstantOp>(loc(Node.Body->Loc), Ty,
+                                                   Func.getSymName());
+
+  return static_cast<mlir::Value>(Res);
 }

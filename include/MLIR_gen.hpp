@@ -2,10 +2,12 @@
 
 #include "AST.hpp"
 #include "ASTVisitor.hpp"
-#include "mlir/IR/Builders.h"
-#include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/MLIRContext.h"
-#include "llvm/ADT/ScopedHashTable.h"
+
+#include <llvm/ADT/ScopedHashTable.h>
+#include <mlir/IR/Builders.h>
+#include <mlir/IR/BuiltinOps.h>
+#include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/SymbolTable.h>
 
 class MLIRGen : public ASTVisitor {
 public:
