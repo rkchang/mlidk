@@ -37,7 +37,7 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
                                    Loc.Column);
 }
 
-auto MLIRGen::getId(std::string Prefix) -> std::string {
+auto MLIRGen::freshName(std::string Prefix) -> std::string {
   auto Id = NextId++;
   return Prefix + std::to_string(Id);
 }
@@ -274,7 +274,6 @@ auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
   auto Call =
       Buildr.create<mlir::func::CallIndirectOp>(loc(Node.Loc), Func, VR);
 
-  // TODO: Arguments
   // TODO: Call direct?
 
   return static_cast<mlir::Value>(Call->getResult(0));
@@ -286,7 +285,7 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
 
   Buildr.setInsertionPointToStart(Module.getBody());
 
-  auto Ty = lettuceTypeToMLIRFunctionType(*Node.Ty, Buildr);
+  auto FuncTy = lettuceTypeToMLIRFunctionType(*Node.Ty, Buildr);
 
   auto ParamsTy = std::vector<mlir::NamedAttribute>();
   for (auto &Param : Node.Params) {
@@ -300,32 +299,33 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
   auto ParamsTyAttr = mlir::ArrayRef<mlir::NamedAttribute>(ParamsTy);
 
   auto Loc = loc(Node.Loc);
-  auto Func =
-      Buildr.create<mlir::func::FuncOp>(Loc, getId("func$"), Ty, ParamsTyAttr);
+  auto Func = Buildr.create<mlir::func::FuncOp>(Loc, freshName("func$"), FuncTy,
+                                                ParamsTyAttr);
 
   // TODO: New scope?
   auto Scope =
       llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value>(SymbolTable);
 
-  //  auto Idx = 0;
-  //  for (auto &Param : Node.Params) {
-  //    auto ParamName = Param.first;
-  //    auto Ty = Param.second;
-  //    SymbolTable.insert(ParamName, Func.getArgument(Idx));
-  //  }
-
-  // TODO: Params?
-
   Func.addEntryBlock();
   auto *FuncBody = &Func.getBody();
   Buildr.setInsertionPointToStart(&FuncBody->front());
+
+  // TODO: Params?
+  auto Idx = 0;
+  for (auto &Param : Node.Params) {
+    // TODO: ParamName is somehow used after scope?!
+    auto ParamName = Param.first;
+    auto ParamVal = static_cast<mlir::Value>(Func.getArgument(Idx));
+    SymbolTable.insert(ParamName, ParamVal);
+    Idx++;
+  }
 
   auto Body = std::any_cast<mlir::Value>(Node.Body->accept(*this, Context));
   Buildr.create<mlir::func::ReturnOp>(loc(Node.Body->Loc), Body);
 
   Buildr.restoreInsertionPoint(IP);
 
-  auto Res = Buildr.create<mlir::func::ConstantOp>(loc(Node.Body->Loc), Ty,
+  auto Res = Buildr.create<mlir::func::ConstantOp>(loc(Node.Body->Loc), FuncTy,
                                                    Func.getSymName());
 
   return static_cast<mlir::Value>(Res);
