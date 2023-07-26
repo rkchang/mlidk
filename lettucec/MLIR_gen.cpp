@@ -251,8 +251,13 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
 }
 
 auto MLIRGen::visit(const CallExpr &Node, std::any) -> std::any {
-  throw UserError(Node.Loc.Filename, Node.Loc.Line, Node.Loc.Column,
-                  "unimplemented");
+  auto Func = SymbolTable.lookup(Node.FuncName);
+  auto Call = Buildr.create<mlir::func::CallIndirectOp>(loc(Node.Loc), Func);
+
+  // TODO: Arguments
+  // TODO: Call direct?
+
+  return static_cast<mlir::Value>(Call->getResult(0));
 }
 
 auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
@@ -265,8 +270,8 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
   auto Func = Buildr.create<mlir::func::FuncOp>(Loc, "func_name", Ty);
 
-  // TODO: Params?
   // TODO: New scope?
+  // TODO: Params?
 
   Func.addEntryBlock();
   auto *FuncBody = &Func.getBody();
