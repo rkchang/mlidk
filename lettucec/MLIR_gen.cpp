@@ -32,6 +32,11 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
                                    Loc.Column);
 }
 
+auto MLIRGen::getId(std::string Prefix) -> std::string {
+  auto Id = NextId++;
+  return Prefix + std::to_string(Id);
+}
+
 //
 
 auto lettuceTypeToMLIRType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
@@ -268,7 +273,7 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
 
   auto Ty = lettuceTypeToMLIRFunctionType(*Node.Ty, Buildr);
   auto Loc = loc(Node.Loc);
-  auto Func = Buildr.create<mlir::func::FuncOp>(Loc, "func_name", Ty);
+  auto Func = Buildr.create<mlir::func::FuncOp>(Loc, getId("func$"), Ty);
 
   // TODO: New scope?
   // TODO: Params?

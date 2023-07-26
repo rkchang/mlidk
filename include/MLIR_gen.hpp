@@ -39,4 +39,6 @@ public:
 private:
   llvm::ScopedHashTable<llvm::StringRef, mlir::Value> SymbolTable;
   mlir::OpBuilder Buildr;
+  int NextId = 0;
+  auto getId(std::string Prefix) -> std::string;
 };
