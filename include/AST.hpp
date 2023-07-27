@@ -116,10 +116,10 @@ public:
 
 class CallExpr : public Expr {
 public:
-  std::string FuncName;
+  std::unique_ptr<Expr> Func;
   std::vector<std::unique_ptr<Expr>> Args;
 
-  CallExpr(Location Loc, std::string FuncName,
+  CallExpr(Location Loc, std::unique_ptr<Expr> Func,
            std::vector<std::unique_ptr<Expr>> Args);
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };

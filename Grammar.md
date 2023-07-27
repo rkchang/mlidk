@@ -7,11 +7,9 @@ expr ::= 'let' name '=' expr 'in' expr
        | 'if' expr 'then' expr 'else' expr
        | '|' [ param ( ',' param )* ] '|' expr
        | logic
-       | func_call
 
 param ::= ident ':' type
 
-func_call ::= ident '(' [ expr ( ',' expr )* ] ')'
 
 logic ::= equality ( ( 'and' | 'or' ) equality )*
 
@@ -23,7 +21,9 @@ term ::= factor ( ( '+' | '-' ) factor )*
 
 factor ::= unary ( ( '*' | '/' ) unary )*
 
-unary ::= [ 'not' ] primary
+unary ::= [ 'not' ] func_call
+
+func_call ::= primary ( '(' [ expr ( ',' expr )* ] ')' )*
 
 primary ::= '(' expr ')' | int | name | bool
 

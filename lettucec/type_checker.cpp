@@ -134,7 +134,7 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
   }
   case ExprKind::CALL: {
     auto *E = static_cast<CallExpr *>(&Exp);
-    auto T = typeInfer(Ctx, *(std::make_unique<VarExpr>(Exp.Loc, E->FuncName)));
+    auto T = typeInfer(Ctx, *E->Func);
     if (T->Tag != TypeTag::FUNC) {
       throw TypeError(Exp.Loc,
                       "Cannot call expression of type " + T->toString());

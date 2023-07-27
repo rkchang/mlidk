@@ -2,6 +2,7 @@
 #include "AST.hpp"
 #include "lexer.hpp"
 #include "types.hpp"
+#include <cassert>
 #include <memory>
 #include <string>
 #include <vector>
@@ -11,6 +12,7 @@ Parser::Parser(Lexer &Lex) : Lex(Lex) {}
 
 auto Parser::parse() -> std::unique_ptr<RootNode> {
   auto Exp = expression();
+  assert(Lex.isDone() && "Parser should fully consume input");
   return std::make_unique<RootNode>(Exp->Loc, std::move(Exp));
 }
 
@@ -23,9 +25,6 @@ auto Parser::expression() -> std::unique_ptr<Expr> {
   }
   if (auto PipeOpt = accept({TokenTag::PIPE})) {
     return funcLit(PipeOpt.value());
-  }
-  if (auto FuncCallOpt = chainAccept({TokenTag::IDENT, TokenTag::LPAREN})) {
-    return funcCall(FuncCallOpt.value()[0]);
   }
   return logic();
 }
@@ -94,11 +93,31 @@ auto Parser::factor() -> std::unique_ptr<Expr> {
 auto Parser::unary() -> std::unique_ptr<Expr> {
   if (auto V = accept({TokenTag::NOT})) {
     const Location Loc = {V->Filename, V->Line, V->Column};
-    auto Right = primary();
+    auto Right = funcCall();
     return std::make_unique<UnaryExpr>(Loc, TokenOp::TagToOp(TokenTag::NOT),
                                        std::move(Right));
   }
-  return primary();
+  return funcCall();
+}
+
+auto Parser::funcCall() -> std::unique_ptr<Expr> {
+  auto Func = primary();
+
+  // Check if is function call
+  while (accept({TokenTag::LPAREN})) {
+    // Get arguments
+    std::vector<std::unique_ptr<Expr>> Args;
+    if (!check({TokenTag::RPAREN})) {
+      Args.push_back(expression());
+      while (accept({TokenTag::COMMA})) {
+        Args.push_back(expression());
+      }
+    }
+    expect({TokenTag::RPAREN});
+    const Location Loc = Func->Loc;
+    Func = std::make_unique<CallExpr>(Loc, std::move(Func), std::move(Args));
+  }
+  return Func;
 }
 
 auto Parser::primary() -> std::unique_ptr<Expr> {
@@ -155,20 +174,6 @@ auto Parser::ifExpression(Token StartToken) -> std::unique_ptr<Expr> {
   auto InExpr = expression();
   return std::make_unique<IfExpr>(Loc, std::move(Condition), std::move(EqExpr),
                                   std::move(InExpr));
-}
-
-auto Parser::funcCall(Token FuncIdent) -> std::unique_ptr<Expr> {
-  // Get arguments
-  std::vector<std::unique_ptr<Expr>> Args;
-  if (!check({TokenTag::RPAREN})) {
-    Args.push_back(expression());
-    while (accept({TokenTag::COMMA})) {
-      Args.push_back(expression());
-    }
-  }
-  expect({TokenTag::RPAREN});
-  const Location Loc = {FuncIdent.Filename, FuncIdent.Line, FuncIdent.Column};
-  return std::make_unique<CallExpr>(Loc, FuncIdent.Value, std::move(Args));
 }
 
 auto Parser::funcLit(Token StartToken) -> std::unique_ptr<Expr> {

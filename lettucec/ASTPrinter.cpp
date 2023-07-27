@@ -98,8 +98,9 @@ auto ASTPrinter::visit(const VarExpr &Node, std::any Context) -> std::any {
 
 auto ASTPrinter::visit(const CallExpr &Node, std::any Context) -> std::any {
   std::cout << GetPrefix(Context) << "CallExpr:"
-            << " " << Node.FuncName << " .Type=" << getType(Node) << "\n";
+            << " .Type=" << getType(Node) << "\n";
   auto NewContext = IncrContext(Context);
+  Node.Func->accept(*this, NewContext);
   for (const auto &Arg : Node.Args) {
     Arg->accept(*this, NewContext);
   }
@@ -112,9 +113,10 @@ auto ASTPrinter::visit(const FuncExpr &Node, std::any Context) -> std::any {
   auto NewContext = IncrContext(Context);
   for (const auto &Param : Node.Params) {
     auto Ty = Param.second;
-    std::cout << ".Param= " << Param.first << " : " << Ty.toString() << "\n";
+    std::cout << GetPrefix(NewContext) << ".Param= " << Param.first << " : "
+              << Ty.toString() << "\n";
   }
-  std::cout << ".Body= "
+  std::cout << GetPrefix(NewContext) << ".Body= "
             << "\n";
   Node.Body->accept(*this, NewContext);
   return NULL;
