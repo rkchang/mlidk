@@ -1,4 +1,3 @@
-#include "AST.fwd.hpp"
 #include "AST.hpp"
 #include "ASTPrinter.hpp"
 #include "parser.hpp"
