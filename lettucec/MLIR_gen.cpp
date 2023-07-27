@@ -2,14 +2,23 @@
 #include "AST.hpp"
 #include "lexer.hpp"
 
-#include "mlir/Dialect/Arith/IR/Arith.h"
-#include "mlir/Dialect/Func/IR/FuncOps.h"
-#include "mlir/Dialect/SCF/IR/SCF.h"
+#include <llvm/ADT/StringRef.h>
+#include <mlir/Dialect/Arith/IR/Arith.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/SCF/IR/SCF.h>
+#include <mlir/IR/Attributes.h>
 #include <mlir/IR/Builders.h>
+#include <mlir/IR/BuiltinAttributes.h>
+#include <mlir/IR/BuiltinTypes.h>
 #include <mlir/IR/TypeRange.h>
+#include <mlir/IR/Types.h>
 #include <mlir/IR/Value.h>
+#include <mlir/IR/ValueRange.h>
+#include <mlir/Support/LLVM.h>
 
 #include <any>
+#include <string>
+#include <vector>
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
     : std::runtime_error(Loc.Filename + ":" + std::to_string(Loc.Line) + ":" +
@@ -27,24 +36,45 @@ auto MLIRGen::loc(const Location &Loc) -> mlir::Location {
                                    Loc.Column);
 }
 
-//
+auto MLIRGen::freshName(std::string Prefix) -> std::string {
+  auto Id = NextId++;
+  return Prefix + std::to_string(Id);
+}
 
-auto lettuceTypeToMLIRType(Type Ty, mlir::OpBuilder Buildr) -> mlir::Type {
+// Type converters
+
+auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type;
+
+auto mlirFunctionType(FuncT &Ty, mlir::OpBuilder Buildr) -> mlir::FunctionType {
+  auto Params = std::vector<mlir::Type>();
+  for (auto &Param : Ty.Params) {
+    Params.push_back(mlirType(Param, Buildr));
+  }
+  auto Ret = mlirType(*Ty.Ret, Buildr);
+  return Buildr.getFunctionType(Params, Ret);
+}
+
+auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
   switch (Ty.Tag) {
   case TypeTag::INT32:
     return Buildr.getI32Type();
   case TypeTag::BOOL:
     return Buildr.getI1Type();
+  case TypeTag::FUNC: {
+    auto *T = static_cast<FuncT *>(&Ty);
+    return mlirFunctionType(*T, Buildr);
+  }
   case TypeTag::VOID:
-  case TypeTag::FUNC:
-    throw MLIRGen::Error(Location{"", -1, -1}, "Unsupported type");
+    throw "Unsupported";
   }
 }
+
+//
 
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
 
-  auto RetTy = lettuceTypeToMLIRType(*(Node.Exp->Ty), Buildr);
+  auto RetTy = mlirType(*(Node.Exp->Ty), Buildr);
   auto Ty = Buildr.getFunctionType(std::nullopt, {RetTy});
 
   auto Fun = Buildr.create<mlir::func::FuncOp>(Loc, "main", Ty);
@@ -70,7 +100,7 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
-  auto TR = mlir::TypeRange(lettuceTypeToMLIRType(*Node.Ty, Buildr));
+  auto TR = mlir::TypeRange(mlirType(*Node.Ty, Buildr));
 
   // Compile condition first
   auto Cond =
@@ -117,7 +147,7 @@ auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
 auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
   auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
-  auto DataType = lettuceTypeToMLIRType(*Node.Ty, Buildr);
+  auto DataType = mlirType(*Node.Ty, Buildr);
   switch (Node.Operator) {
   case TokenOp::OpType::ADD:
     return static_cast<mlir::Value>(
@@ -218,7 +248,84 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
   throw Error(Node.Loc, "Unknown variable reference: " + Node.Name);
 }
 
-auto MLIRGen::visit(const CallExpr &Node, std::any) -> std::any {
-  throw UserError(Node.Loc.Filename, Node.Loc.Line, Node.Loc.Column,
-                  "unimplemented");
+auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
+  auto Func = SymbolTable.lookup(Node.FuncName);
+
+  // Generate code for every argument and store it in a ValueRange
+  auto Args = std::vector<mlir::Value>();
+  for (auto &Arg : Node.Args) {
+    auto Res = std::any_cast<mlir::Value>(Arg->accept(*this, Context));
+    Args.push_back(Res);
+  }
+  auto VR = mlir::ValueRange(Args);
+
+  // TODO: Call direct?
+  // We call the function indirectly because we are storing it in an SSA
+  // variable using a func.constant operation
+  auto Call =
+      Buildr.create<mlir::func::CallIndirectOp>(loc(Node.Loc), Func, VR);
+
+  return static_cast<mlir::Value>(Call->getResult(0));
+}
+
+auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
+  // For some reason we have to generate functions at the module top-level
+  auto IP = Buildr.saveInsertionPoint();
+  Buildr.setInsertionPointToStart(Module.getBody());
+
+  // Note how we need to generate a mlir::FunctionType, not mlir::Type,
+  // otherwise the overload resolution for FuncOp.build won't work
+  auto *T = static_cast<FuncT *>(Node.Ty.get());
+  auto FuncTy = mlirFunctionType(*T, Buildr);
+
+  // Store all function parameters as typed and named attributes
+  auto ParamsTy = std::vector<mlir::NamedAttribute>();
+  for (auto &Param : Node.Params) {
+    auto Name = Param.first;
+    auto Ty = Param.second;
+    auto ParamName = Buildr.getStringAttr(Name);
+    auto ParamTy = mlirType(Ty, Buildr);
+    auto ParamTyAttr = mlir::TypeAttr::get(ParamTy);
+    ParamsTy.push_back(mlir::NamedAttribute(ParamName, ParamTyAttr));
+  }
+  auto ParamsTyAttr = mlir::ArrayRef<mlir::NamedAttribute>(ParamsTy);
+
+  // Create a FuncOp with a fresh name
+  auto Loc = loc(Node.Loc);
+  auto Func = Buildr.create<mlir::func::FuncOp>(Loc, freshName("func$"), FuncTy,
+                                                ParamsTyAttr);
+
+  // Create new scope for function body
+  auto Scope =
+      llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value>(SymbolTable);
+
+  // Create function body, and move insertion point
+  Func.addEntryBlock();
+  auto *FuncBody = &Func.getBody();
+  Buildr.setInsertionPointToStart(&FuncBody->front());
+
+  // Insert every parameter into the symbol table
+  auto Idx = 0;
+  for (auto &Param : Node.Params) {
+    // For some reason ParamName must be initialized as a llvm::StringRef
+    // (instead of using a implicit conversion like in LetExpr)
+    // otherwise we get an AddressSanitizer error
+    auto ParamName = llvm::StringRef(Param.first);
+    auto ParamVal = static_cast<mlir::Value>(Func.getArgument(Idx));
+    SymbolTable.insert(ParamName, ParamVal);
+    Idx++;
+  }
+
+  // Generate body, and insert a ReturnOp with the resulting value
+  auto Body = std::any_cast<mlir::Value>(Node.Body->accept(*this, Context));
+  Buildr.create<mlir::func::ReturnOp>(loc(Node.Body->Loc), Body);
+
+  // Restore insertion point
+  Buildr.restoreInsertionPoint(IP);
+
+  // Create a reference to the function we just created
+  auto Res = Buildr.create<mlir::func::ConstantOp>(loc(Node.Body->Loc), FuncTy,
+                                                   Func.getSymName());
+
+  return static_cast<mlir::Value>(Res);
 }

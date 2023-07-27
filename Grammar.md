@@ -5,12 +5,12 @@ prog ::= expr
 
 expr ::= 'let' name '=' expr 'in' expr
        | 'if' expr 'then' expr 'else' expr
+       | '|' [ param ( ',' param )* ] '|' expr
        | logic
-       | func_def
        | func_call
 
-func_def ::= 'fun' '(' [ ident ( ',' ident )* ] ')' expr
-    
+param ::= ident ':' type
+
 func_call ::= ident '(' [ expr ( ',' expr )* ] ')'
 
 logic ::= equality ( ( 'and' | 'or' ) equality )*
@@ -30,4 +30,9 @@ primary ::= '(' expr ')' | int | name | bool
 bool ::= 'true' | 'false'
 int  ::= [0-9]+
 name ::= [a-z][a-zA-Z0-9_]*
+
+type ::= '(' [ type ( ',' type )* ] ')' '->' type
+       | 'i32'
+       | 'bool'
+       | 'void'
 ```

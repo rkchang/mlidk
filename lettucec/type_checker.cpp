@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
@@ -156,5 +157,33 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
     Exp.Ty = FuncTy->Ret;
     return FuncTy->Ret;
   }
+  case ExprKind::FUNC:
+    auto *E = static_cast<FuncExpr *>(&Exp);
+    auto ParamNames = std::unordered_set<std::string>();
+    auto ParamTypes = std::vector<Type>();
+
+    // Collect parameter types
+    for (auto &Param : E->Params) {
+      auto ParamName = Param.first;
+      auto ParamTy = Param.second;
+      if (ParamNames.contains(ParamName)) {
+        throw TypeError(Exp.Loc,
+                        "Duplicate parameter name '" + ParamName + "'");
+      }
+      ParamNames.insert(ParamName);
+      ParamTypes.push_back(ParamTy);
+      Ctx[ParamName] = std::make_shared<Type>(ParamTy);
+    }
+
+    auto BodyTy = typeInfer(Ctx, *E->Body);
+    auto FuncTy = std::make_shared<FuncT>(ParamTypes, BodyTy);
+
+    // Remove parameters from context
+    for (auto &ParamName : ParamNames) {
+      Ctx.erase(ParamName);
+    }
+
+    Exp.Ty = FuncTy;
+    return FuncTy;
   }
 }

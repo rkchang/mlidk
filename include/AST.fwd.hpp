@@ -11,3 +11,4 @@ class IntExpr;
 class BoolExpr;
 class VarExpr;
 class CallExpr;
+class FuncExpr;

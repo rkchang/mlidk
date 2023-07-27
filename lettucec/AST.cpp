@@ -89,3 +89,12 @@ CallExpr::CallExpr(Location Loc, std::string Name,
 auto CallExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
   return Visitor.visit(*this, Context);
 }
+
+FuncExpr::FuncExpr(Location Loc,
+                   std::vector<std::pair<std::string, Type>> Params,
+                   std::unique_ptr<Expr> Body)
+    : Expr(Loc, ExprKind::FUNC), Params(Params), Body(std::move(Body)) {}
+
+auto FuncExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+  return Visitor.visit(*this, Context);
+}

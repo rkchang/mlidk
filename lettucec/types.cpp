@@ -28,7 +28,7 @@ auto Type::operator==(Type &That) -> bool {
   }
 }
 
-auto Type::toString() -> std::string {
+auto Type::toString() -> std::string const {
   switch (Tag) {
   case TypeTag::INT32:
     return "i32";
@@ -39,8 +39,13 @@ auto Type::toString() -> std::string {
   case TypeTag::FUNC: {
     auto *Self = static_cast<FuncT *>(this);
     std::string S = "(";
+    auto First = true;
     for (auto P : Self->Params) {
+      if (!First) {
+        S.append(", ");
+      }
       S.append(P.toString());
+      First = false;
     }
     S.append(") -> " + Self->Ret->toString());
     return S;

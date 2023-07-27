@@ -2,10 +2,12 @@
 
 #include "AST.hpp"
 #include "ASTVisitor.hpp"
-#include "mlir/IR/Builders.h"
-#include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/MLIRContext.h"
-#include "llvm/ADT/ScopedHashTable.h"
+
+#include <llvm/ADT/ScopedHashTable.h>
+#include <mlir/IR/Builders.h>
+#include <mlir/IR/BuiltinOps.h>
+#include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/SymbolTable.h>
 
 class MLIRGen : public ASTVisitor {
 public:
@@ -28,6 +30,8 @@ public:
   auto visit(const BoolExpr &Node, std::any Context) -> std::any override;
   auto visit(const VarExpr &Node, std::any Context) -> std::any override;
   auto visit(const CallExpr &Node, std::any Context) -> std::any override;
+  auto visit(const FuncExpr &Node, std::any Context) -> std::any override;
+
   auto loc(const Location &Loc) -> mlir::Location;
 
   mlir::ModuleOp Module;
@@ -35,4 +39,6 @@ public:
 private:
   llvm::ScopedHashTable<llvm::StringRef, mlir::Value> SymbolTable;
   mlir::OpBuilder Buildr;
+  int NextId = 0;
+  auto freshName(std::string Prefix) -> std::string;
 };
