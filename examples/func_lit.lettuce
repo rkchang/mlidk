@@ -1,1 +1,5 @@
-(|x : i32| x)(1)
+let f = (|x : i32| x)(1) in
+let g = (|| 1)() in
+let h = (|x : i32, y : i32| x + y)(1, 2) in
+let i = (|| (|| 2))()() in
+f + g + h + i
