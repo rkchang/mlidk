@@ -1,9 +1,11 @@
+#include "AST.fwd.hpp"
 #include "AST.hpp"
 #include "ASTPrinter.hpp"
 #include "parser.hpp"
 #include <deque>
 
 #include <gtest/gtest.h>
+#include <utility>
 #include <vector>
 
 auto genAST(std::string Source) -> std::unique_ptr<Expr> {
@@ -185,6 +187,54 @@ TEST(ParserTest, CallExpr) {
 
   auto *Two = dynamic_cast<IntExpr *>(CallExprArg0->Right.get());
   EXPECT_NE(Two, nullptr) << "Expected IntExpr";
+}
+
+TEST(ParserTest, CallFuncLitNoParam) {
+  std::string Source = "(|| x + 1)()";
+  auto AST = genAST(Source);
+  auto *Call = dynamic_cast<CallExpr *>(AST.get());
+  EXPECT_NE(Call, nullptr) << "Expected CallExpr";
+
+  auto *Func = dynamic_cast<FuncExpr *>(Call->Func.get());
+  EXPECT_NE(Func, nullptr) << "Expected FuncExpr";
+
+  auto Params = Func->Params;
+  EXPECT_EQ(Params.size(), 0) << "Expected 0 Parameters";
+
+  auto Body = std::move(Call->Args);
+  EXPECT_EQ(Body.size(), 0) << "Expected 0 Arguments";
+}
+
+TEST(ParserTest, CallFuncLitOneParam) {
+  std::string Source = "(|x : i32| x + 1)(2)";
+  auto AST = genAST(Source);
+  auto *Call = dynamic_cast<CallExpr *>(AST.get());
+  EXPECT_NE(Call, nullptr) << "Expected CallExpr";
+
+  auto *Func = dynamic_cast<FuncExpr *>(Call->Func.get());
+  EXPECT_NE(Func, nullptr) << "Expected FuncExpr";
+
+  auto Params = Func->Params;
+  EXPECT_EQ(Params.size(), 1) << "Expected 1 Parameter";
+
+  auto Body = std::move(Call->Args);
+  EXPECT_EQ(Body.size(), 1) << "Expected 1 Argument";
+}
+
+TEST(ParserTest, CallFuncLitTwoParam) {
+  std::string Source = "(|x : i32, y : i32| x + y)(1, 2)";
+  auto AST = genAST(Source);
+  auto *Call = dynamic_cast<CallExpr *>(AST.get());
+  EXPECT_NE(Call, nullptr) << "Expected CallExpr";
+
+  auto *Func = dynamic_cast<FuncExpr *>(Call->Func.get());
+  EXPECT_NE(Func, nullptr) << "Expected FuncExpr";
+
+  auto Params = Func->Params;
+  EXPECT_EQ(Params.size(), 2) << "Expected 2 Parameters";
+
+  auto Body = std::move(Call->Args);
+  EXPECT_EQ(Body.size(), 2) << "Expected 2 Arguments";
 }
 
 TEST(ParserTest, FuncExprNoParams) {

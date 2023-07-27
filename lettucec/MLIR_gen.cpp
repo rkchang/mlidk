@@ -249,7 +249,7 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
 }
 
 auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
-  auto Func = SymbolTable.lookup(Node.FuncName);
+  auto Func = std::any_cast<mlir::Value>(Node.Func->accept(*this, Context));
 
   // Generate code for every argument and store it in a ValueRange
   auto Args = std::vector<mlir::Value>();

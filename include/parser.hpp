@@ -26,6 +26,7 @@ private:
   auto term() -> std::unique_ptr<Expr>;
   auto factor() -> std::unique_ptr<Expr>;
   auto unary() -> std::unique_ptr<Expr>;
+  auto funcCall() -> std::unique_ptr<Expr>;
   auto primary() -> std::unique_ptr<Expr>;
 
   auto type() -> std::shared_ptr<Type>;
@@ -42,7 +43,6 @@ private:
   // Helpers
   auto letExpression(Token StartToken) -> std::unique_ptr<Expr>;
   auto ifExpression(Token StartToken) -> std::unique_ptr<Expr>;
-  auto funcCall(Token FuncIdent) -> std::unique_ptr<Expr>;
   auto funcLit(Token StartToken) -> std::unique_ptr<Expr>;
 
   auto identifier() -> std::string;

@@ -82,9 +82,9 @@ auto VarExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
   return Visitor.visit(*this, Context);
 }
 
-CallExpr::CallExpr(Location Loc, std::string Name,
+CallExpr::CallExpr(Location Loc, std::unique_ptr<Expr> Func,
                    std::vector<std::unique_ptr<Expr>> Args)
-    : Expr(Loc, ExprKind::CALL), FuncName(Name), Args(std::move(Args)) {}
+    : Expr(Loc, ExprKind::CALL), Func(std::move(Func)), Args(std::move(Args)) {}
 
 auto CallExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
   return Visitor.visit(*this, Context);
