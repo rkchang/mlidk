@@ -1,11 +1,9 @@
-#include "AST.fwd.hpp"
 #include "AST.hpp"
 #include "ASTPrinter.hpp"
 #include "parser.hpp"
 #include <deque>
 
 #include <gtest/gtest.h>
-#include <utility>
 #include <vector>
 
 auto genAST(std::string Source) -> std::unique_ptr<Expr> {
