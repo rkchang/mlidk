@@ -52,4 +52,8 @@ private:
                         Expr &Body,
                         std::vector<std::pair<std::string, mlir::FunctionType>>
                             OtherDefinitions = {}) -> void;
+  auto getOrCreateGlobalString(mlir::Location Loc, llvm::StringRef Name,
+                               mlir::StringRef Value) -> mlir::Value;
+  auto AddArgs(const std::vector<std::unique_ptr<Expr>> &Args, std::any Context,
+               std::vector<mlir::Value> &ArgsOut) -> void;
 };

@@ -13,8 +13,12 @@
 #include <vector>
 
 #include <mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/TargetParser/Host.h>
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/AsmState.h>
@@ -58,6 +62,8 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
   }
 
   auto TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>{};
+  FuncT ftype = {std::vector<Type>{*Int32T}, Int32T};
+  TypeCtx.insert({"print", std::make_shared<FuncT>(ftype)});
 
   typeInfer(TypeCtx, *(AST->Exp));
 
@@ -109,18 +115,16 @@ void runJIT(mlir::OwningOpRef<mlir::ModuleOp> Module) {
   // Initialize LLVM targets.
   mlir::registerLLVMDialectTranslation(*Module->getContext());
 
-  // Create an MLIR execution engine.
-  mlir::ExecutionEngineOptions EngineOptions;
-  EngineOptions.enableObjectDump = true;
-  auto MaybeEngine =
-      mlir::ExecutionEngine::create(Module->getOperation(), EngineOptions);
-  assert(MaybeEngine && "Failed to construct an execution engine");
-  auto &Engine = MaybeEngine.get();
+  if (InputFilename == ReplMode) {
+    // Run JIT
+    // Create an MLIR execution engine.
+    mlir::ExecutionEngineOptions EngineOptions;
+    EngineOptions.enableObjectDump = true;
+    auto MaybeEngine =
+        mlir::ExecutionEngine::create(Module->getOperation(), EngineOptions);
+    assert(MaybeEngine && "Failed to construct an execution engine");
+    auto &Engine = MaybeEngine.get();
 
-  if (InputFilename != ReplMode) {
-    Engine->dumpToObjectFile("output.o");
-    std::cout << "Wrote output.o" << std::endl;
-  } else {
     // Invoke the JIT-compiled function.
     int32_t Result = 0;
     llvm::SmallVector<void *> ArgsArray{&Result};
@@ -130,6 +134,64 @@ void runJIT(mlir::OwningOpRef<mlir::ModuleOp> Module) {
       std::exit(1);
     }
     std::cout << "Return value: " << Result << std::endl;
+  } else {
+    // Lower MLIR to LLVM IR and emit object code
+    // Taken from the kaleidoscope tutorial with some minor edits:
+    // https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl08.html
+
+    // Convert dialect to LLVM IR
+    llvm::LLVMContext LlvmContext;
+    auto LlvmModule =
+        mlir::translateModuleToLLVMIR(Module->getOperation(), LlvmContext);
+    if (!LlvmModule) {
+      llvm::errs() << "Failed to emit LLVM IR\n";
+      std::exit(1);
+    }
+    // Print out the LLVM IR
+    if (Dbg) {
+      std::cout << std::endl << "LLVM IR:" << std::endl;
+      LlvmModule->dump();
+    }
+
+    // Setup the target
+    auto TargetTriple = llvm::sys::getDefaultTargetTriple();
+    LlvmModule->setTargetTriple(TargetTriple);
+    std::string Error;
+    auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
+    // Print an error and exit if we couldn't find the requested target.
+    // This generally occurs if we've forgotten to initialise the
+    // TargetRegistry or we have a bogus target triple.
+    if (!Target) {
+      llvm::errs() << Error;
+      std::exit(1);
+    }
+    auto CPU = "generic";
+    auto Features = "";
+    llvm::TargetOptions opt;
+    auto RM = std::optional<llvm::Reloc::Model>();
+    auto TheTargetMachine =
+        Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+    LlvmModule->setDataLayout(TheTargetMachine->createDataLayout());
+
+    // Create object file
+    auto Filename = "output.o";
+    std::error_code EC;
+    llvm::raw_fd_ostream dest(Filename, EC, llvm::sys::fs::OF_None);
+    if (EC) {
+      llvm::errs() << "Could not open file: " << EC.message();
+      std::exit(1);
+    }
+
+    // Emit object code
+    llvm::legacy::PassManager pass;
+    auto FileType = llvm::CGFT_ObjectFile;
+    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
+      llvm::errs() << "TheTargetMachine can't emit a file of this type";
+      std::exit(1);
+    }
+    pass.run(*LlvmModule);
+    dest.flush();
+    std::cout << "Wrote output.o" << std::endl;
   }
 }
 
@@ -146,6 +208,7 @@ int main(int argc, char *argv[]) {
   Context.getOrLoadDialect<mlir::arith::ArithDialect>();
   Context.getOrLoadDialect<mlir::func::FuncDialect>();
   Context.getOrLoadDialect<mlir::scf::SCFDialect>();
+  Context.getOrLoadDialect<mlir::LLVM::LLVMDialect>();
 
   if (InputFilename == ReplMode) {
     std::string Line;
