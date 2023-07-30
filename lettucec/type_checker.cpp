@@ -113,7 +113,59 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
     return BodyTy;
   }
   case ExprKind::DEF: {
-    throw "unsuported";
+    auto *E = static_cast<DefExpr *>(&Exp);
+
+    auto DefinitionNames = std::unordered_set<std::string>();
+    for (auto &Definition : E->Definitions) {
+      // Check for duplicate definition names
+      if (DefinitionNames.contains(Definition.Name)) {
+        throw TypeError(Exp.Loc,
+                        "Duplicate definition name '" + Definition.Name + "'");
+      }
+      DefinitionNames.insert(Definition.Name);
+
+      auto ParamNames = std::unordered_set<std::string>();
+      auto ParamTypes = std::vector<Type>();
+
+      // Collect parameter types
+      for (auto &Param : Definition.Params) {
+        auto ParamName = Param.first;
+        auto ParamTy = Param.second;
+        if (ParamNames.contains(ParamName)) {
+          throw TypeError(Exp.Loc,
+                          "Duplicate parameter name '" + ParamName + "'");
+        }
+        ParamNames.insert(ParamName);
+        ParamTypes.push_back(ParamTy);
+      }
+
+      auto RetTy = std::make_shared<Type>(Definition.ReturnType);
+      auto FuncTy = std::make_shared<FuncT>(ParamTypes, RetTy);
+      Ctx[Definition.Name] = FuncTy;
+    }
+
+    // Check individual bodies
+    for (auto &Definition : E->Definitions) {
+      auto ParamNames = std::unordered_set<std::string>();
+      // Collect parameter types
+      for (auto &Param : Definition.Params) {
+        auto ParamName = Param.first;
+        auto ParamTy = Param.second;
+        ParamNames.insert(ParamName);
+        Ctx[ParamName] = std::make_shared<Type>(ParamTy);
+      }
+      auto RetTy = std::make_shared<Type>(Definition.ReturnType);
+      typeCheck(Ctx, *Definition.Body, RetTy);
+      // Remove parameters from context
+      for (auto &ParamName : ParamNames) {
+        Ctx.erase(ParamName);
+      }
+    }
+
+    auto Ty = typeInfer(Ctx, *E->Body);
+    E->Ty = Ty;
+
+    return Ty;
   }
   case ExprKind::IF: {
     auto *E = static_cast<IfExpr *>(&Exp);
