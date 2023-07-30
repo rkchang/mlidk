@@ -273,3 +273,73 @@ TEST(ParserTest, FuncExprTwoParams) {
   auto *Body = dynamic_cast<IntExpr *>(Func->Body.get());
   EXPECT_NE(Body, nullptr) << "Expected IntExpr";
 }
+
+TEST(ParserTest, DefExprOne) {
+  std::string Source = "let def f() -> i32 = 0 in 0";
+  auto AST = genAST(Source);
+  auto *Def = dynamic_cast<DefExpr *>(AST.get());
+  EXPECT_NE(Def, nullptr) << "Expected DefExpr";
+
+  auto Defintions = std::move(Def->Definitions);
+  EXPECT_EQ(Defintions.size(), 1) << "Expected 1 Definition";
+
+  auto Params = (Defintions[0].Params);
+  EXPECT_EQ(Params.size(), 0) << "Expected 0 parameters";
+
+  auto Name = (Defintions[0].Name);
+  EXPECT_EQ(Name, "f") << "Expected Defition name";
+
+  auto *Body = dynamic_cast<IntExpr *>(Def->Body.get());
+  EXPECT_NE(Body, nullptr) << "Expected IntExpr body";
+}
+
+TEST(ParserTest, DefExprSingleParam) {
+  std::string Source = "let def f(x: i32) -> i32 = 0 in 0";
+  auto AST = genAST(Source);
+  auto *Def = dynamic_cast<DefExpr *>(AST.get());
+  EXPECT_NE(Def, nullptr) << "Expected DefExpr";
+
+  auto Defintions = std::move(Def->Definitions);
+  EXPECT_EQ(Defintions.size(), 1) << "Expected 1 Definition";
+
+  auto Params = (Defintions[0].Params);
+  EXPECT_EQ(Params.size(), 1) << "Expected 1 parameter";
+
+  auto *Body = dynamic_cast<IntExpr *>(Def->Body.get());
+  EXPECT_NE(Body, nullptr) << "Expected IntExpr body";
+}
+
+TEST(ParserTest, DefExprDoubleParams) {
+  std::string Source = "let def f(x: i32, y: bool) -> i32 = 0 in 0";
+  auto AST = genAST(Source);
+  auto *Def = dynamic_cast<DefExpr *>(AST.get());
+  EXPECT_NE(Def, nullptr) << "Expected DefExpr";
+
+  auto Defintions = std::move(Def->Definitions);
+  EXPECT_EQ(Defintions.size(), 1) << "Expected 1 Definition";
+
+  auto Params = (Defintions[0].Params);
+  EXPECT_EQ(Params.size(), 2) << "Expected 2 parameters";
+
+  auto *Body = dynamic_cast<IntExpr *>(Def->Body.get());
+  EXPECT_NE(Body, nullptr) << "Expected IntExpr body";
+}
+
+TEST(ParserTest, DefExprTwo) {
+  std::string Source = "let def f() -> i32 = 0 def g() -> bool = true in 0";
+  auto AST = genAST(Source);
+  auto *Def = dynamic_cast<DefExpr *>(AST.get());
+  EXPECT_NE(Def, nullptr) << "Expected DefExpr";
+
+  auto Defintions = std::move(Def->Definitions);
+  EXPECT_EQ(Defintions.size(), 2) << "Expected 1 Definitions";
+
+  auto Name1 = (Defintions[0].Name);
+  EXPECT_EQ(Name1, "f") << "Expected Defition name";
+
+  auto Name2 = (Defintions[1].Name);
+  EXPECT_EQ(Name2, "g") << "Expected Defition name";
+
+  auto *Body = dynamic_cast<IntExpr *>(Def->Body.get());
+  EXPECT_NE(Body, nullptr) << "Expected IntExpr body";
+}

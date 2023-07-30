@@ -45,7 +45,10 @@ private:
   auto ifExpression(Token StartToken) -> std::unique_ptr<Expr>;
   auto funcLit(Token StartToken) -> std::unique_ptr<Expr>;
 
+  auto defBinders() -> std::vector<DefBinder>;
+
   auto identifier() -> std::string;
+  auto parameters() -> std::vector<std::pair<std::string, Type>>;
 
   Lexer &Lex;
 };

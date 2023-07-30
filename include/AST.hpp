@@ -47,6 +47,27 @@ public:
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };
 
+struct DefBinder {
+  Location Loc;
+  std::string Name;
+  std::vector<std::pair<std::string, Type>> Params;
+  Type ReturnType;
+  std::unique_ptr<Expr> Body;
+
+  DefBinder(Location Loc, std::string Name,
+            std::vector<std::pair<std::string, Type>> Params, Type ReturnType,
+            std::unique_ptr<Expr> Body);
+};
+
+class DefExpr : public Expr {
+public:
+  std::vector<DefBinder> Definitions;
+  std::unique_ptr<Expr> Body;
+  DefExpr(Location Loc, std::vector<DefBinder> Definitions,
+          std::unique_ptr<Expr> Body);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
 class LetExpr : public Expr {
 public:
   std::string Name;
