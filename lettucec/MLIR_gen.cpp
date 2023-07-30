@@ -273,18 +273,35 @@ auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
-  // For some reason we have to generate functions at the module top-level
-  auto IP = Buildr.saveInsertionPoint();
-  Buildr.setInsertionPointToStart(Module.getBody());
-
   // Note how we need to generate a mlir::FunctionType, not mlir::Type,
   // otherwise the overload resolution for FuncOp.build won't work
   auto *T = static_cast<FuncT *>(Node.Ty.get());
   auto FuncTy = mlirFunctionType(*T, Buildr);
 
+  auto Name = freshName("func$");
+
+  auto Loc = Node.Loc;
+
+  generateFunction(Node.Loc, Context, Name, FuncTy, Node.Params, *Node.Body);
+
+  // Create a reference to the function we just created
+  auto Res =
+      Buildr.create<mlir::func::ConstantOp>(loc(Node.Body->Loc), FuncTy, Name);
+
+  return static_cast<mlir::Value>(Res);
+}
+
+auto MLIRGen::generateFunction(Location Loca, std::any Context,
+                               std::string Name, mlir::FunctionType FuncTy,
+                               std::vector<std::pair<std::string, Type>> Params,
+                               Expr &Body) -> void {
+  // For some reason we have to generate functions at the module top-level
+  auto IP = Buildr.saveInsertionPoint();
+  Buildr.setInsertionPointToStart(Module.getBody());
+
   // Store all function parameters as typed and named attributes
   auto ParamsTy = std::vector<mlir::NamedAttribute>();
-  for (auto &Param : Node.Params) {
+  for (auto &Param : Params) {
     auto Name = Param.first;
     auto Ty = Param.second;
     auto ParamName = Buildr.getStringAttr(Name);
@@ -295,9 +312,9 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
   auto ParamsTyAttr = mlir::ArrayRef<mlir::NamedAttribute>(ParamsTy);
 
   // Create a FuncOp with a fresh name
-  auto Loc = loc(Node.Loc);
-  auto Func = Buildr.create<mlir::func::FuncOp>(Loc, freshName("func$"), FuncTy,
-                                                ParamsTyAttr);
+  auto Loc = loc(Loca);
+  auto Func =
+      Buildr.create<mlir::func::FuncOp>(Loc, Name, FuncTy, ParamsTyAttr);
 
   // Create new scope for function body
   auto Scope =
@@ -310,7 +327,7 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
 
   // Insert every parameter into the symbol table
   auto Idx = 0;
-  for (auto &Param : Node.Params) {
+  for (auto &Param : Params) {
     // For some reason ParamName must be initialized as a llvm::StringRef
     // (instead of using a implicit conversion like in LetExpr)
     // otherwise we get an AddressSanitizer error
@@ -321,15 +338,9 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
   }
 
   // Generate body, and insert a ReturnOp with the resulting value
-  auto Body = std::any_cast<mlir::Value>(Node.Body->accept(*this, Context));
-  Buildr.create<mlir::func::ReturnOp>(loc(Node.Body->Loc), Body);
+  auto RetVal = std::any_cast<mlir::Value>(Body.accept(*this, Context));
+  Buildr.create<mlir::func::ReturnOp>(loc(Body.Loc), RetVal);
 
   // Restore insertion point
   Buildr.restoreInsertionPoint(IP);
-
-  // Create a reference to the function we just created
-  auto Res = Buildr.create<mlir::func::ConstantOp>(loc(Node.Body->Loc), FuncTy,
-                                                   Func.getSymName());
-
-  return static_cast<mlir::Value>(Res);
 }
