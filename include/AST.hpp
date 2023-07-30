@@ -30,7 +30,7 @@ public:
 //                                Expressions                                //
 //---------------------------------------------------------------------------//
 
-enum class ExprKind { LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR, CALL, FUNC };
+enum class ExprKind { DEF, LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR, CALL, FUNC };
 
 class Expr : public ASTNode {
 public:

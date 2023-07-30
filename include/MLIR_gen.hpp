@@ -22,6 +22,7 @@ public:
 
   auto visit(const RootNode &Node, std::any Context) -> std::any override;
 
+  auto visit(const DefExpr &Node, std::any Context) -> std::any override;
   auto visit(const LetExpr &Node, std::any Context) -> std::any override;
   auto visit(const IfExpr &Node, std::any Context) -> std::any override;
   auto visit(const BinaryExpr &Node, std::any Context) -> std::any override;

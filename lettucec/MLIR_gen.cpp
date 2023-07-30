@@ -90,6 +90,10 @@ auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   return Fun;
 }
 
+auto MLIRGen::visit(const DefExpr &, std::any) -> std::any {
+  throw "unimplemented";
+}
+
 auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
   const llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> Scope(
       SymbolTable);

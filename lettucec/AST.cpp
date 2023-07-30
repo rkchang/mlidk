@@ -19,15 +19,15 @@ DefBinder::DefBinder(Location Loc, std::string Name,
 
 DefExpr::DefExpr(Location Loc, std::vector<DefBinder> Definitions,
                  std::unique_ptr<Expr> Body)
-    : Expr(Loc, ExprKind::LET), Definitions(std::move(Definitions)),
+    : Expr(Loc, ExprKind::DEF), Definitions(std::move(Definitions)),
       Body(std::move(Body)) {
   assert(this->Definitions.size() >= 1 &&
          "Must define at least one definition");
   assert(this->Body != nullptr);
 }
 
-auto DefExpr::accept(ASTVisitor &, std::any) const -> std::any {
-  throw "unimplemented DefExpr";
+auto DefExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+  return Visitor.visit(*this, Context);
 }
 
 LetExpr::LetExpr(Location Loc, std::string Name, std::unique_ptr<Expr> Value,

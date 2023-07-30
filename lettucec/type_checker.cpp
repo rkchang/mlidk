@@ -112,6 +112,9 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
     Exp.Ty = BodyTy;
     return BodyTy;
   }
+  case ExprKind::DEF: {
+    throw "unsuported";
+  }
   case ExprKind::IF: {
     auto *E = static_cast<IfExpr *>(&Exp);
     typeCheck(Ctx, *(E->Condition), BoolT);
