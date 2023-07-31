@@ -90,8 +90,50 @@ auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   return Fun;
 }
 
-auto MLIRGen::visit(const DefExpr &, std::any) -> std::any {
-  throw "unimplemented";
+auto MLIRGen::visit(const DefExpr &Node, std::any Context) -> std::any {
+  const auto Scope =
+      llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value>(SymbolTable);
+
+  auto AllDefinitions =
+      std::vector<std::pair<std::string, mlir::FunctionType>>();
+
+  // A DefExpr represents a mutually recusive group of functions, and each
+  // function must be visible from every other function as well as the body
+  // expression at the end. To do this we first iterate over all the function
+  // definitions and:
+  //  - Collect the function names and their types, to be used later when
+  //    generating individual function bodies
+  //  - Generate the function "constant" operation for the final body
+  //    expression, and insert it to the SymbolTable
+  // This approach means that every function call every other function
+  // (including itself) indirectly. But we're going with it because it is very
+  // simple to implement
+  for (auto &Definition : Node.Definitions) {
+    auto *T = static_cast<FuncT *>(Definition.Ty.get());
+    auto FuncTy = mlirFunctionType(*T, Buildr);
+
+    AllDefinitions.push_back(std::make_pair(Definition.Name, FuncTy));
+
+    auto Func = static_cast<mlir::Value>(Buildr.create<mlir::func::ConstantOp>(
+        loc(Node.Body->Loc), FuncTy, Definition.Name));
+
+    SymbolTable.insert(Definition.Name, Func);
+  }
+
+  // After all the function signatures have been collected, we just need to
+  // generate the body for each function. And pass down the signatures of the
+  // other functions. (ideally we'd remove the function being generated, but we
+  // don't for simplicity)
+  for (auto &Definition : Node.Definitions) {
+    auto *T = static_cast<FuncT *>(Definition.Ty.get());
+    auto FuncTy = mlirFunctionType(*T, Buildr);
+
+    generateFunction(Definition.Loc, Context, Definition.Name, FuncTy,
+                     Definition.Params, *Definition.Body, AllDefinitions);
+  }
+
+  // Generate body expression
+  return Node.Body->accept(*this, Context);
 }
 
 auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
@@ -280,8 +322,6 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
 
   auto Name = freshName("func$");
 
-  auto Loc = Node.Loc;
-
   generateFunction(Node.Loc, Context, Name, FuncTy, Node.Params, *Node.Body);
 
   // Create a reference to the function we just created
@@ -291,10 +331,12 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
   return static_cast<mlir::Value>(Res);
 }
 
-auto MLIRGen::generateFunction(Location Loca, std::any Context,
-                               std::string Name, mlir::FunctionType FuncTy,
-                               std::vector<std::pair<std::string, Type>> Params,
-                               Expr &Body) -> void {
+auto MLIRGen::generateFunction(
+    Location Loca, std::any Context, std::string Name,
+    mlir::FunctionType FuncTy, std::vector<std::pair<std::string, Type>> Params,
+    Expr &Body,
+    std::vector<std::pair<std::string, mlir::FunctionType>> OtherDefinitions)
+    -> void {
   // For some reason we have to generate functions at the module top-level
   auto IP = Buildr.saveInsertionPoint();
   Buildr.setInsertionPointToStart(Module.getBody());
@@ -324,6 +366,15 @@ auto MLIRGen::generateFunction(Location Loca, std::any Context,
   Func.addEntryBlock();
   auto *FuncBody = &Func.getBody();
   Buildr.setInsertionPointToStart(&FuncBody->front());
+
+  // Insert loads for the other functions in the mutually recursive group,
+  // if applicable
+  for (auto &OtherDefinition : OtherDefinitions) {
+    auto Func = static_cast<mlir::Value>(Buildr.create<mlir::func::ConstantOp>(
+        Loc, OtherDefinition.second, OtherDefinition.first));
+
+    SymbolTable.insert(OtherDefinition.first, Func);
+  }
 
   // Insert every parameter into the symbol table
   auto Idx = 0;

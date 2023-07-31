@@ -141,6 +141,7 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
 
       auto RetTy = std::make_shared<Type>(Definition.ReturnType);
       auto FuncTy = std::make_shared<FuncT>(ParamTypes, RetTy);
+      Definition.Ty = FuncTy;
       Ctx[Definition.Name] = FuncTy;
     }
 

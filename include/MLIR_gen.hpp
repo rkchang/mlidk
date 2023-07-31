@@ -49,5 +49,7 @@ private:
   auto generateFunction(Location Loca, std::any Context, std::string Name,
                         mlir::FunctionType FuncTy,
                         std::vector<std::pair<std::string, Type>> Params,
-                        Expr &Body) -> void;
+                        Expr &Body,
+                        std::vector<std::pair<std::string, mlir::FunctionType>>
+                            OtherDefinitions = {}) -> void;
 };

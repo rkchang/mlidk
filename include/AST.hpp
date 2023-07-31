@@ -53,6 +53,7 @@ struct DefBinder {
   std::vector<std::pair<std::string, Type>> Params;
   Type ReturnType;
   std::unique_ptr<Expr> Body;
+  std::shared_ptr<Type> Ty;
 
   DefBinder(Location Loc, std::string Name,
             std::vector<std::pair<std::string, Type>> Params, Type ReturnType,

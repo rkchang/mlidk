@@ -15,7 +15,7 @@ DefBinder::DefBinder(Location Loc, std::string Name,
                      std::vector<std::pair<std::string, Type>> Params,
                      Type ReturnType, std::unique_ptr<Expr> Body)
     : Loc(Loc), Name(Name), Params(Params), ReturnType(ReturnType),
-      Body(std::move(Body)) {}
+      Body(std::move(Body)), Ty(nullptr) {}
 
 DefExpr::DefExpr(Location Loc, std::vector<DefBinder> Definitions,
                  std::unique_ptr<Expr> Body)
