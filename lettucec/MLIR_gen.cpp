@@ -1,5 +1,7 @@
 #include "MLIR_gen.hpp"
 #include "AST.hpp"
+#include "Romaine/RomaineDialect.h"
+#include "Romaine/RomaineOps.h"
 #include "lexer.hpp"
 
 #include <llvm/ADT/StringRef.h>
@@ -332,9 +334,8 @@ auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
 }
 
 auto MLIRGen::generateFunction(
-    Location Loca, std::any Context, std::string Name,
-    mlir::FunctionType FuncTy, std::vector<std::pair<std::string, Type>> Params,
-    Expr &Body,
+    Location Loca, std::any Context, std::string, mlir::FunctionType FuncTy,
+    std::vector<std::pair<std::string, Type>> Params, Expr &Body,
     std::vector<std::pair<std::string, mlir::FunctionType>> OtherDefinitions)
     -> void {
   // For some reason we have to generate functions at the module top-level
@@ -355,8 +356,8 @@ auto MLIRGen::generateFunction(
 
   // Create a FuncOp with a fresh name
   auto Loc = loc(Loca);
-  auto Func =
-      Buildr.create<mlir::func::FuncOp>(Loc, Name, FuncTy, ParamsTyAttr);
+  auto Func = Buildr.create<mlir::romaine::ClosureOp>(
+      Loc, mlir::TypeRange(FuncTy), FuncTy, ParamsTyAttr, mlir::ArrayAttr());
 
   // Create new scope for function body
   auto Scope =
