@@ -150,11 +150,38 @@ auto Parser::identifier() -> std::string {
   throw Error(Lex.peek());
 }
 
+auto Parser::parameters() -> std::vector<std::pair<std::string, Type>> {
+  auto Params = std::vector<std::pair<std::string, Type>>();
+  auto Name = identifier();
+  expect({TokenTag::COLON});
+  auto Ty = type();
+  auto Param = std::make_pair(Name, *Ty);
+  Params.push_back(Param);
+
+  while (accept({TokenTag::COMMA})) {
+    auto Name = identifier();
+    expect({TokenTag::COLON});
+    auto Ty = type();
+    auto Param = std::make_pair(Name, *Ty);
+    Params.push_back(Param);
+  }
+  return Params;
+}
+
 // expression helpers
 
 auto Parser::letExpression(Token StartToken) -> std::unique_ptr<Expr> {
   const Location Loc = {StartToken.Filename, StartToken.Line,
                         StartToken.Column};
+  // Check if it is a definition group
+  if (check({TokenTag::DEF})) {
+    auto Definitions = defBinders();
+    expect({TokenTag::IN});
+    auto InExpr = expression();
+    return std::make_unique<DefExpr>(Loc, std::move(Definitions),
+                                     std::move(InExpr));
+  }
+  // Otherwise it's a normal let-expression
   auto Name = expect({TokenTag::IDENT}).Value;
   expect({TokenTag::EQUAL});
   auto EqExpr = expression();
@@ -179,19 +206,7 @@ auto Parser::ifExpression(Token StartToken) -> std::unique_ptr<Expr> {
 auto Parser::funcLit(Token StartToken) -> std::unique_ptr<Expr> {
   auto Params = std::vector<std::pair<std::string, Type>>();
   if (!check({TokenTag::PIPE})) {
-    auto Name = identifier();
-    expect({TokenTag::COLON});
-    auto Ty = type();
-    auto Param = std::make_pair(Name, *Ty);
-    Params.push_back(Param);
-
-    while (accept({TokenTag::COMMA})) {
-      auto Name = identifier();
-      expect({TokenTag::COLON});
-      auto Ty = type();
-      auto Param = std::make_pair(Name, *Ty);
-      Params.push_back(Param);
-    }
+    Params = parameters();
   }
   expect({TokenTag::PIPE});
 
@@ -200,6 +215,28 @@ auto Parser::funcLit(Token StartToken) -> std::unique_ptr<Expr> {
   const Location Loc = {StartToken.Filename, StartToken.Line,
                         StartToken.Column};
   return std::make_unique<FuncExpr>(Loc, Params, std::move(Body));
+}
+
+auto Parser::defBinders() -> std::vector<DefBinder> {
+  auto DefBinders = std::vector<DefBinder>();
+  while (auto DefToken = accept({TokenTag::DEF})) {
+    auto Loc = Location{DefToken->Filename, DefToken->Line, DefToken->Column};
+    auto Name = identifier();
+    expect({TokenTag::LPAREN});
+    auto Params = std::vector<std::pair<std::string, Type>>();
+    if (!check({TokenTag::RPAREN})) {
+      Params = parameters();
+    }
+    expect({TokenTag::RPAREN});
+    expect({TokenTag::ARROW});
+    auto ReturnType = type();
+    expect({TokenTag::EQUAL});
+    auto Body = expression();
+
+    DefBinders.push_back(
+        DefBinder(Loc, Name, Params, *ReturnType, std::move(Body)));
+  }
+  return DefBinders;
 }
 
 //

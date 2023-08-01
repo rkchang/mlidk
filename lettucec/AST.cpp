@@ -11,6 +11,25 @@ auto RootNode::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
   return Visitor.visit(*this, Context);
 }
 
+DefBinder::DefBinder(Location Loc, std::string Name,
+                     std::vector<std::pair<std::string, Type>> Params,
+                     Type ReturnType, std::unique_ptr<Expr> Body)
+    : Loc(Loc), Name(Name), Params(Params), ReturnType(ReturnType),
+      Body(std::move(Body)), Ty(nullptr) {}
+
+DefExpr::DefExpr(Location Loc, std::vector<DefBinder> Definitions,
+                 std::unique_ptr<Expr> Body)
+    : Expr(Loc, ExprKind::DEF), Definitions(std::move(Definitions)),
+      Body(std::move(Body)) {
+  assert(this->Definitions.size() >= 1 &&
+         "Must define at least one definition");
+  assert(this->Body != nullptr);
+}
+
+auto DefExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+  return Visitor.visit(*this, Context);
+}
+
 LetExpr::LetExpr(Location Loc, std::string Name, std::unique_ptr<Expr> Value,
                  std::unique_ptr<Expr> Body)
     : Expr(Loc, ExprKind::LET), Name(Name), Value(std::move(Value)),

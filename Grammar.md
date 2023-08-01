@@ -3,13 +3,19 @@
 ```
 prog ::= expr
 
-expr ::= 'let' name '=' expr 'in' expr
+expr ::= 'let' defns 'in' expr
        | 'if' expr 'then' expr 'else' expr
-       | '|' [ param ( ',' param )* ] '|' expr
+       | '|' params '|' expr
        | logic
 
-param ::= ident ':' type
+defns ::= ( 'def' def_binder )+
+        | let_binder
 
+let_binder = name '=' expr
+def_binder = name '(' params ')' '->' type '=' expr
+
+params ::= [ param ( ',' param )* ]
+param  ::= ident ':' type
 
 logic ::= equality ( ( 'and' | 'or' ) equality )*
 

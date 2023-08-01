@@ -56,6 +56,13 @@ TEST(LexerTest, LexSkipWhitespace) {
   EXPECT_EQ(Tok.Value, "abc");
 }
 
+TEST(LexerTest, LexDef) {
+  Lexer Lexer("def", "hello.cpp");
+  Token Tok = Lexer.token();
+  EXPECT_EQ(Tok.Tag, TokenTag::DEF);
+  EXPECT_EQ(Tok.Value, "def");
+}
+
 TEST(LexerTest, LexLet) {
   Lexer Lexer("let", "hello.cpp");
   Token Tok = Lexer.token();

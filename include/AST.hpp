@@ -30,7 +30,7 @@ public:
 //                                Expressions                                //
 //---------------------------------------------------------------------------//
 
-enum class ExprKind { LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR, CALL, FUNC };
+enum class ExprKind { DEF, LET, IF, BIN_OP, UN_OP, INT, BOOL, VAR, CALL, FUNC };
 
 class Expr : public ASTNode {
 public:
@@ -44,6 +44,28 @@ public:
   std::unique_ptr<Expr> Exp;
 
   RootNode(Location Loc, std::unique_ptr<Expr> Exp);
+  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+};
+
+struct DefBinder {
+  Location Loc;
+  std::string Name;
+  std::vector<std::pair<std::string, Type>> Params;
+  Type ReturnType;
+  std::unique_ptr<Expr> Body;
+  std::shared_ptr<Type> Ty;
+
+  DefBinder(Location Loc, std::string Name,
+            std::vector<std::pair<std::string, Type>> Params, Type ReturnType,
+            std::unique_ptr<Expr> Body);
+};
+
+class DefExpr : public Expr {
+public:
+  std::vector<DefBinder> Definitions;
+  std::unique_ptr<Expr> Body;
+  DefExpr(Location Loc, std::vector<DefBinder> Definitions,
+          std::unique_ptr<Expr> Body);
   auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
 };
 

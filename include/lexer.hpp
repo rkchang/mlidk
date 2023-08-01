@@ -30,6 +30,7 @@ enum class TokenTag {
   DOT,
   COLON,
   // Keywords
+  DEF,
   LET,
   IN,
   IF,

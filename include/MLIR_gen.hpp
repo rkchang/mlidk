@@ -4,10 +4,13 @@
 #include "ASTVisitor.hpp"
 
 #include <llvm/ADT/ScopedHashTable.h>
+#include <memory>
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/BuiltinOps.h>
+#include <mlir/IR/BuiltinTypes.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/IR/SymbolTable.h>
+#include <vector>
 
 class MLIRGen : public ASTVisitor {
 public:
@@ -22,6 +25,7 @@ public:
 
   auto visit(const RootNode &Node, std::any Context) -> std::any override;
 
+  auto visit(const DefExpr &Node, std::any Context) -> std::any override;
   auto visit(const LetExpr &Node, std::any Context) -> std::any override;
   auto visit(const IfExpr &Node, std::any Context) -> std::any override;
   auto visit(const BinaryExpr &Node, std::any Context) -> std::any override;
@@ -41,4 +45,11 @@ private:
   mlir::OpBuilder Buildr;
   int NextId = 0;
   auto freshName(std::string Prefix) -> std::string;
+
+  auto generateFunction(Location Loca, std::any Context, std::string Name,
+                        mlir::FunctionType FuncTy,
+                        std::vector<std::pair<std::string, Type>> Params,
+                        Expr &Body,
+                        std::vector<std::pair<std::string, mlir::FunctionType>>
+                            OtherDefinitions = {}) -> void;
 };
