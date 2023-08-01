@@ -1,0 +1,7 @@
+let f =
+    if true then
+        (|x: i32| x + 2)
+    else
+        (|y: i32| y - 2)
+in
+    f(0)

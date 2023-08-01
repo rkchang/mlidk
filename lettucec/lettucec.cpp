@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h>
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
@@ -88,6 +89,10 @@ mlir::OwningOpRef<mlir::ModuleOp> genMLIR(mlir::MLIRContext &Context,
   auto PM = mlir::PassManager(&Context);
   applyPassManagerCLOptions(PM);
   PM.addPass(lettuce::createLowerToLLVMPass());
+
+  // Other passes may independently create unrealized_cast operations.
+  // Reconcile them once at the end
+  PM.addPass(mlir::createReconcileUnrealizedCastsPass());
   if (mlir::failed(PM.run(*Module))) {
     std::cerr << "Failed to lower to LLVM dialect\n";
     std::exit(1);
