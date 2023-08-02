@@ -19,11 +19,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
   -fsanitize=undefined \
   -fno-optimize-sibling-calls \
   -g"
-        )
+)
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} \
   -fsanitize=address,undefined \
   -g"
-        )
+)
 
 # General Build flags
 target_compile_options(lettucec PRIVATE
@@ -32,7 +32,7 @@ target_compile_options(lettucec PRIVATE
         -Wextra
         -fPIE
         -Werror
-        )
+)
 
 llvm_map_components_to_libnames(llvm_libs support core irreader orcjit nativecodegen)
 
@@ -45,7 +45,7 @@ set(LIBS
         MLIROptLib
         MLIRLLVMToLLVMIRTranslation
         MLIRExecutionEngine
-        )
+)
 
 
 # Link against LLVM and MLIR libraries

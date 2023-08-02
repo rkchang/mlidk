@@ -5,6 +5,7 @@
 #include <llvm/ADT/StringRef.h>
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/IR/Attributes.h>
 #include <mlir/IR/Builders.h>
@@ -19,6 +20,39 @@
 #include <any>
 #include <string>
 #include <vector>
+
+// Return a value representing an access into a global string with the given
+// name, creating the string if necessary.
+// Taken from the toy tutorial with some minor edits
+// https://mlir.llvm.org/docs/Tutorials/Toy/Ch-6/
+auto MLIRGen::getOrCreateGlobalString(mlir::Location Loc, llvm::StringRef Name,
+                                      mlir::StringRef Value) -> mlir::Value {
+  // Create the global at the entry of the module.
+  mlir::LLVM::GlobalOp Global;
+  if (!(Global = Module.lookupSymbol<mlir::LLVM::GlobalOp>(Name))) {
+    // Reset insertion point when this goes out of scope
+    const mlir::OpBuilder::InsertionGuard InsertGuard(Buildr);
+    Buildr.setInsertionPointToStart(Module.getBody());
+    auto Type =
+        mlir::LLVM::LLVMArrayType::get(Buildr.getI8Type(), Value.size());
+    // Create a global that contains Value
+    Global = Buildr.create<mlir::LLVM::GlobalOp>(
+        Loc, Type, /*isConstant=*/true, mlir::LLVM::Linkage::Internal, Name,
+        Buildr.getStringAttr(Value),
+        /*alignment=*/0);
+  }
+
+  // Get the pointer to the first character in the global string.
+  const mlir::Value GlobalPtr =
+      Buildr.create<mlir::LLVM::AddressOfOp>(Loc, Global);
+  const mlir::Value Cst0 = Buildr.create<mlir::LLVM::ConstantOp>(
+      Loc, Buildr.getI64Type(), Buildr.getIndexAttr(0));
+  return Buildr.create<mlir::LLVM::GEPOp>(
+      Loc,
+      mlir::LLVM::LLVMPointerType::get(
+          mlir::IntegerType::get(Buildr.getContext(), 8)),
+      GlobalPtr, llvm::ArrayRef<mlir::Value>({Cst0, Cst0}));
+}
 
 MLIRGen::Error::Error(Location Loc, std::string Msg)
     : std::runtime_error(Loc.Filename + ":" + std::to_string(Loc.Line) + ":" +
@@ -73,6 +107,13 @@ auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
 
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
+  // Create a function declaration for printf, the signature is:
+  //   i32 printf(i8*, ...)`
+  // First arg is the format str, varargs are the variables
+  auto LlvmFnType = mlir::LLVM::LLVMFunctionType::get(
+      Buildr.getI32Type(), mlir::LLVM::LLVMPointerType::get(Buildr.getI8Type()),
+      /*isVarArg=*/true);
+  Buildr.create<mlir::LLVM::LLVMFuncOp>(loc(Node.Loc), "printf", LlvmFnType);
 
   auto RetTy = mlirType(*(Node.Exp->Ty), Buildr);
   auto Ty = Buildr.getFunctionType(std::nullopt, {RetTy});
@@ -294,15 +335,35 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
   throw Error(Node.Loc, "Unknown variable reference: " + Node.Name);
 }
 
-auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
-  auto Func = std::any_cast<mlir::Value>(Node.Func->accept(*this, Context));
-
-  // Generate code for every argument and store it in a ValueRange
-  auto Args = std::vector<mlir::Value>();
-  for (auto &Arg : Node.Args) {
+// Generate code for every argument and add their value to ArgsOut
+auto MLIRGen::addArgs(const std::vector<std::unique_ptr<Expr>> &Args,
+                      std::any Context, std::vector<mlir::Value> &ArgsOut)
+    -> void {
+  for (auto &Arg : Args) {
     auto Res = std::any_cast<mlir::Value>(Arg->accept(*this, Context));
-    Args.push_back(Res);
+    ArgsOut.push_back(Res);
   }
+}
+
+auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
+  std::vector<mlir::Value> Args;
+  // Check if it's a call to print
+  if (auto *Var = dynamic_cast<VarExpr *>(Node.Func.get())) {
+    if (Var->Name == "print") {
+      // Get the format string "%i \n" for printf
+      const mlir::Value FormatSpecifierCst = getOrCreateGlobalString(
+          loc(Node.Loc), "frmt_spec", mlir::StringRef("%i \n\0", 4));
+      Args.push_back(FormatSpecifierCst);
+      addArgs(Node.Args, Context, Args);
+      auto CallOp = Buildr.create<mlir::LLVM::CallOp>(
+          loc(Node.Loc), Buildr.getI32Type(),
+          mlir::SymbolRefAttr::get(Buildr.getContext(), "printf"),
+          mlir::ValueRange(Args));
+      return CallOp.getResult();
+    }
+  }
+  auto Func = std::any_cast<mlir::Value>(Node.Func->accept(*this, Context));
+  addArgs(Node.Args, Context, Args);
   auto VR = mlir::ValueRange(Args);
 
   // TODO: Call direct?
