@@ -107,9 +107,6 @@ auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
 
 auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
-  const llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> Scope(
-      SymbolTable);
-
   // Create a function declaration for printf, the signature is:
   //   i32 printf(i8*, ...)`
   // First arg is the format str, varargs are the variables
