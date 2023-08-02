@@ -339,7 +339,7 @@ auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
 }
 
 // Generate code for every argument and add their value to ArgsOut
-auto MLIRGen::AddArgs(const std::vector<std::unique_ptr<Expr>> &Args,
+auto MLIRGen::addArgs(const std::vector<std::unique_ptr<Expr>> &Args,
                       std::any Context, std::vector<mlir::Value> &ArgsOut)
     -> void {
   for (auto &Arg : Args) {
@@ -357,7 +357,7 @@ auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
       const mlir::Value FormatSpecifierCst = getOrCreateGlobalString(
           loc(Node.Loc), "frmt_spec", mlir::StringRef("%i \n\0", 4));
       Args.push_back(FormatSpecifierCst);
-      AddArgs(Node.Args, Context, Args);
+      addArgs(Node.Args, Context, Args);
       auto CallOp = Buildr.create<mlir::LLVM::CallOp>(
           loc(Node.Loc), Buildr.getI32Type(),
           mlir::SymbolRefAttr::get(Buildr.getContext(), "printf"),
@@ -366,7 +366,7 @@ auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
     }
   }
   auto Func = std::any_cast<mlir::Value>(Node.Func->accept(*this, Context));
-  AddArgs(Node.Args, Context, Args);
+  addArgs(Node.Args, Context, Args);
   auto VR = mlir::ValueRange(Args);
 
   // TODO: Call direct?

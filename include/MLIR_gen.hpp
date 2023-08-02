@@ -54,6 +54,6 @@ private:
                             OtherDefinitions = {}) -> void;
   auto getOrCreateGlobalString(mlir::Location Loc, llvm::StringRef Name,
                                mlir::StringRef Value) -> mlir::Value;
-  auto AddArgs(const std::vector<std::unique_ptr<Expr>> &Args, std::any Context,
+  auto addArgs(const std::vector<std::unique_ptr<Expr>> &Args, std::any Context,
                std::vector<mlir::Value> &ArgsOut) -> void;
 };
