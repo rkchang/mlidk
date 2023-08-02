@@ -10,7 +10,6 @@
 #include <iostream>
 #include <memory>
 #include <unordered_map>
-#include <vector>
 
 #include <mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h>
 #include <mlir/Dialect/Arith/IR/Arith.h>
@@ -24,6 +23,7 @@
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
+#include <mlir/Transforms/Passes.h>
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
@@ -37,12 +37,27 @@ llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional,
                                          llvm::cl::value_desc("filename"));
 
 llvm::cl::opt<bool>
-    Dbg("printDbg", llvm::cl::desc("Output AST, MLIR and LLVM IR to stdout"));
+    Dbg("dbg", llvm::cl::desc("Output AST, MLIR and LLVM IR to stdout"));
+
+llvm::cl::opt<bool>
+    DbgSrc("dbg-src", llvm::cl::desc("Output source code to stdout"));
+
+llvm::cl::opt<bool>
+    DbgAst("dbg-ast", llvm::cl::desc("Output AST to stdout"));
+
+llvm::cl::opt<bool>
+    DbgMLIR("dbg-mlir", llvm::cl::desc("Output MLIR to stdout"));
+
+llvm::cl::opt<bool>
+    DbgLLVM("dbg-llvm", llvm::cl::desc("Output LLVM IR to stdout"));
+
+llvm::cl::opt<bool>
+    Canonicalize("canonicalize", llvm::cl::desc("Canonicalize output"));
 
 std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
                                          const std::string &Filename) {
   // Print source
-  if (Dbg) {
+  if (Dbg || DbgSrc) {
     std::cout << "Source:" << std::endl;
     llvm::outs() << Buffer << "\n";
   }
@@ -51,7 +66,7 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
   auto Parsr = Parser(Lexr);
   auto AST = Parsr.parse();
   // Print out the AST
-  if (Dbg) {
+  if (Dbg || DbgAst) {
     std::cout << std::endl << "AST:" << std::endl;
     auto Printer = ASTPrinter();
     AST->accept(Printer, 0);
@@ -61,7 +76,7 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
 
   typeInfer(TypeCtx, *(AST->Exp));
 
-  if (Dbg) {
+  if (Dbg || DbgAst) {
     std::cout << std::endl << "TAST:" << std::endl;
     auto Printer = ASTPrinter();
     AST->accept(Printer, 0);
@@ -79,7 +94,18 @@ mlir::OwningOpRef<mlir::ModuleOp> genMLIR(mlir::MLIRContext &Context,
     std::cerr << "Failed to verify MLIR Module\n";
     std::exit(1);
   }
-  if (Dbg) {
+
+  if (Canonicalize) {
+    auto PM0 = mlir::PassManager(&Context);
+    applyPassManagerCLOptions(PM0);
+    PM0.addPass(mlir::createCanonicalizerPass());
+    if (mlir::failed(PM0.run(*Module))) {
+      std::cerr << "Failed to canonicalize dialect\n";
+      std::exit(1);
+    }
+  }
+
+  if (Dbg || DbgMLIR) {
     // Print out the MLIR
     std::cout << std::endl << "MLIR:" << std::endl;
     Module->dump();
@@ -93,11 +119,12 @@ mlir::OwningOpRef<mlir::ModuleOp> genMLIR(mlir::MLIRContext &Context,
   // Other passes may independently create unrealized_cast operations.
   // Reconcile them once at the end
   PM.addPass(mlir::createReconcileUnrealizedCastsPass());
+
   if (mlir::failed(PM.run(*Module))) {
     std::cerr << "Failed to lower to LLVM dialect\n";
     std::exit(1);
   }
-  if (Dbg) {
+  if (Dbg || DbgLLVM) {
     // Print out the LLVM dialect
     std::cout << std::endl << "LLVM Dialect:" << std::endl;
     Module->dump();
