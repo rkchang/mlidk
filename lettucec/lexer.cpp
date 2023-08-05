@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <stdexcept>
 
 auto TokenOp::TagToOp(TokenTag Tag) -> OpType {
   std::unordered_map<TokenTag, OpType> Map{

@@ -1,4 +1,5 @@
 #include "types.hpp"
+#include <iostream>
 #include <string>
 
 auto Type::operator==(Type &That) -> bool {
@@ -26,6 +27,8 @@ auto Type::operator==(Type &That) -> bool {
     }
     return true;
   }
+  std::cerr << "Invalid TypeTag\n";
+  exit(1);
 }
 
 auto Type::toString() -> std::string const {
@@ -51,4 +54,6 @@ auto Type::toString() -> std::string const {
     return S;
   }
   }
+  std::cerr << "Invalid TypeTag\n";
+  exit(1);
 }
