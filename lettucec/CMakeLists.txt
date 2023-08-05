@@ -1,4 +1,4 @@
-set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+set(CMAKE_CXX_CLANG_TIDY clang-tidy -extra-arg=-Wno-unknown-warning-option)
 
 add_executable(lettucec
         lettucec.cpp # main file for letttucec
