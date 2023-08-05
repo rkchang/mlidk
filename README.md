@@ -2,6 +2,8 @@
 
 ### Build
 
+Tested on MacOS Ventura 13.4.1 (c) 
+
 #### Build prerequisites
 
 ```
