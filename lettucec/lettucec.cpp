@@ -11,10 +11,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include <mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/TargetParser/Host.h>
+#include <mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h>
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
@@ -43,20 +43,19 @@ llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional,
 llvm::cl::opt<bool>
     Dbg("dbg", llvm::cl::desc("Output AST, MLIR and LLVM IR to stdout"));
 
-llvm::cl::opt<bool>
-    DbgSrc("dbg-src", llvm::cl::desc("Output source code to stdout"));
+llvm::cl::opt<bool> DbgSrc("dbg-src",
+                           llvm::cl::desc("Output source code to stdout"));
 
-llvm::cl::opt<bool>
-    DbgAst("dbg-ast", llvm::cl::desc("Output AST to stdout"));
+llvm::cl::opt<bool> DbgAst("dbg-ast", llvm::cl::desc("Output AST to stdout"));
 
-llvm::cl::opt<bool>
-    DbgMLIR("dbg-mlir", llvm::cl::desc("Output MLIR to stdout"));
+llvm::cl::opt<bool> DbgMLIR("dbg-mlir",
+                            llvm::cl::desc("Output MLIR to stdout"));
 
-llvm::cl::opt<bool>
-    DbgLLVM("dbg-llvm", llvm::cl::desc("Output LLVM IR to stdout"));
+llvm::cl::opt<bool> DbgLLVM("dbg-llvm",
+                            llvm::cl::desc("Output LLVM IR to stdout"));
 
-llvm::cl::opt<bool>
-    Canonicalize("canonicalize", llvm::cl::desc("Canonicalize output"));
+llvm::cl::opt<bool> Canonicalize("canonicalize",
+                                 llvm::cl::desc("Canonicalize output"));
 
 std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
                                          const std::string &Filename) {
@@ -195,9 +194,9 @@ void runJIT(mlir::OwningOpRef<mlir::ModuleOp> Module) {
     auto CPU = "generic";
     auto Features = "";
     llvm::TargetOptions opt;
-    auto RM = std::optional<llvm::Reloc::Model>();
-    auto TheTargetMachine =
-        Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+    auto RM = std::optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
+    auto TheTargetMachine = std::unique_ptr<llvm::TargetMachine>(
+        Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM));
     LlvmModule->setDataLayout(TheTargetMachine->createDataLayout());
 
     // Create object file
@@ -257,6 +256,7 @@ int main(int argc, char *argv[]) {
     }
     auto Buffer = FileOrErr.get()->getBuffer();
     auto AST = parseInputFile(Buffer, InputFilename);
-    runJIT(genMLIR(Context, std::move(AST)));
+    auto blah = genMLIR(Context, std::move(AST));
+    runJIT(std::move(blah));
   }
 }

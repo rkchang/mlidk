@@ -1,9 +1,10 @@
 #include <lexer.hpp>
 
+#include <cctype>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <stdexcept>
 
 auto TokenOp::TagToOp(TokenTag Tag) -> OpType {
   std::unordered_map<TokenTag, OpType> Map{
@@ -56,7 +57,7 @@ Lexer::Lexer(std::string_view Source, std::string Filename)
 
 auto Lexer::token() -> Token {
   // Skip all leading whitespace
-  takeWhile(std::isspace);
+  takeWhile([](char C) { return std::isspace(C); });
   if (isDone()) {
     return Token{TokenTag::EOI, "", Filename, State.Line, State.Column};
   }
@@ -145,7 +146,7 @@ auto Lexer::token() -> Token {
   default:
     if (std::isdigit(Char)) {
       // Int
-      auto Value = takeWhile(std::isdigit);
+      auto Value = takeWhile([](char C) { return std::isdigit(C); });
       return Token{TokenTag::INT, Value, Filename, StartLine, StartCol};
 
     } else if (std::isalpha(Char)) {

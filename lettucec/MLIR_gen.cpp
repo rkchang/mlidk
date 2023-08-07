@@ -98,7 +98,7 @@ auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
     auto *T = static_cast<FuncT *>(&Ty);
     return mlirFunctionType(*T, Buildr);
   }
-  case TypeTag::VOID:
+  default:
     throw "Unsupported";
   }
 }
@@ -295,19 +295,7 @@ auto MLIRGen::visit(const UnaryExpr &Node, std::any Context) -> std::any {
     return static_cast<mlir::Value>(
         Buildr.create<mlir::arith::SelectOp>(loc(Node.Loc), Rhs, False, True));
   }
-
-  case TokenOp::OpType::ADD:
-  case TokenOp::OpType::MINUS:
-  case TokenOp::OpType::MUL:
-  case TokenOp::OpType::DIV:
-  case TokenOp::OpType::EQ:
-  case TokenOp::OpType::NE:
-  case TokenOp::OpType::LT:
-  case TokenOp::OpType::LE:
-  case TokenOp::OpType::GT:
-  case TokenOp::OpType::GE:
-  case TokenOp::OpType::AND:
-  case TokenOp::OpType::OR:
+  default:
     throw Error(Node.Loc, "Unsupported operation");
   }
 }
