@@ -2,7 +2,7 @@
 
 ### Build
 
-Tested on MacOS Ventura 13.4.1 (c) 
+Tested on MacOS Ventura 13.4.1 (c)
 
 #### Build prerequisites
 
@@ -88,3 +88,15 @@ unittests/                  # contains googletest unittests
 - For example, `RomaineOps.td` corresponds to `RomaineOps.h`
   - after building, `RomaineOps.h.inc` will be generated in the build directory
   - `RomaineOps.h` includes this file
+
+### Docker
+
+```
+# Build Docker image
+docker build . -t lettuce 
+# Create container and mount current directory in container 
+docker create -t -i --name lettuce -v $(pwd):/lettuce lettuce bash
+# Start the container
+docker start -a -i lettuce
+
+```
