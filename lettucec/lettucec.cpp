@@ -76,8 +76,8 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
   }
 
   auto TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>{};
-  FuncT ftype = {std::vector<Type>{*Int32T}, Int32T};
-  TypeCtx.insert({"print", std::make_shared<FuncT>(ftype)});
+  FuncT Ftype = {std::vector<Type>{*Int32T}, Int32T};
+  TypeCtx.insert({"print", std::make_shared<FuncT>(Ftype)});
 
   typeInfer(TypeCtx, *(AST->Exp));
 
@@ -183,7 +183,8 @@ void runJIT(mlir::OwningOpRef<mlir::ModuleOp> Module) {
     auto TargetTriple = llvm::sys::getDefaultTargetTriple();
     LlvmModule->setTargetTriple(TargetTriple);
     std::string Error;
-    auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
+    const auto *Target =
+        llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
     // Print an error and exit if we couldn't find the requested target.
     // This generally occurs if we've forgotten to initialise the
     // TargetRegistry or we have a bogus target triple.
@@ -191,32 +192,32 @@ void runJIT(mlir::OwningOpRef<mlir::ModuleOp> Module) {
       llvm::errs() << Error;
       std::exit(1);
     }
-    auto CPU = "generic";
-    auto Features = "";
-    llvm::TargetOptions opt;
+    const auto *CPU = "generic";
+    const auto *Features = "";
+    llvm::TargetOptions Opt;
     auto RM = std::optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
     auto TheTargetMachine = std::unique_ptr<llvm::TargetMachine>(
-        Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM));
+        Target->createTargetMachine(TargetTriple, CPU, Features, Opt, RM));
     LlvmModule->setDataLayout(TheTargetMachine->createDataLayout());
 
     // Create object file
-    auto Filename = "output.o";
+    const auto *Filename = "output.o";
     std::error_code EC;
-    llvm::raw_fd_ostream dest(Filename, EC, llvm::sys::fs::OF_None);
+    llvm::raw_fd_ostream Dest(Filename, EC, llvm::sys::fs::OF_None);
     if (EC) {
       llvm::errs() << "Could not open file: " << EC.message();
       std::exit(1);
     }
 
     // Emit object code
-    llvm::legacy::PassManager pass;
+    llvm::legacy::PassManager Pass;
     auto FileType = llvm::CGFT_ObjectFile;
-    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
+    if (TheTargetMachine->addPassesToEmitFile(Pass, Dest, nullptr, FileType)) {
       llvm::errs() << "TheTargetMachine can't emit a file of this type";
       std::exit(1);
     }
-    pass.run(*LlvmModule);
-    dest.flush();
+    Pass.run(*LlvmModule);
+    Dest.flush();
     std::cout << "Wrote output.o" << std::endl;
   }
 }
@@ -256,7 +257,7 @@ int main(int argc, char *argv[]) {
     }
     auto Buffer = FileOrErr.get()->getBuffer();
     auto AST = parseInputFile(Buffer, InputFilename);
-    auto blah = genMLIR(Context, std::move(AST));
-    runJIT(std::move(blah));
+    auto GeneratedMLIR = genMLIR(Context, std::move(AST));
+    runJIT(std::move(GeneratedMLIR));
   }
 }
