@@ -2,6 +2,25 @@
 
 Lettuce is a new functional programming language with a simple static type system. This repository contains its corresponding MLIR/LLVM based compiler/interpreter: `lettucec`.
 
+Example lettuce code:
+
+```
+let
+    def isEven(n: i32) -> bool =
+        if n == 0 then
+            true
+        else
+            isOdd(n - 1)
+
+    def isOdd(n: i32) -> bool =
+        if n == 0 then
+            false
+        else
+            isEven(n - 1)
+in
+    isEven(31)
+```
+
 Demo of compiler mode:
 
 ```
