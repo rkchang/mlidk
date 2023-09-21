@@ -1,6 +1,6 @@
 # The Lettuce programming language and compiler/interpreter
 
-This repository contains the compiler/interpreter `lettucec` for the Lettuce programming language.
+Lettuce is a new functional programming language with a simple static type system. This repository contains its corresponding MLIR/LLVM based compiler/interpreter: `lettucec`.
 
 Demo of compiler mode:
 
