@@ -1,8 +1,8 @@
 #pragma once
 
-#include <exception>
 #include <functional>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 enum class TokenTag {

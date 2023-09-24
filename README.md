@@ -1,8 +1,64 @@
-# mlidk
+# The Lettuce programming language and compiler/interpreter
+
+Lettuce is a new functional programming language with a simple static type system. This repository contains its corresponding MLIR/LLVM based compiler/interpreter: `lettucec`.
+
+Example lettuce code:
+
+```
+let
+    def isEven(n: i32) -> bool =
+        if n == 0 then
+            true
+        else
+            isOdd(n - 1)
+
+    def isOdd(n: i32) -> bool =
+        if n == 0 then
+            false
+        else
+            isEven(n - 1)
+in
+    isEven(31)
+```
+
+Demo of compiler mode:
+
+```
+~/dev/lettuce/build/lettucec
+❯ ./lettucec ../../examples/print.lettuce
+Wrote output.o
+❯ clang++ output.o -o output
+❯ ./output
+4
+~/dev/lettuce/build/lettucec
+❯ ./lettucec ../../examples/if_func_lit.lettuce
+Wrote output.o
+❯ clang++ output.o -o output
+❯ ./output
+❯ echo $?
+2
+```
+
+Demo of interpreter mode:
+
+```
+~/dev/lettuce/build/lettucec
+❯ ./lettucec
+>>> let i = (1 + 2) * 3 in i + 4
+Return value: 13
+>>> let i = 1 in print(4)
+4
+Return value: 3
+>>> let h = (|x : i32, y : i32| x + y)(1, 2) in
+REPL:1:44: Parser Error:
+>>> let h = (|x : i32, y : i32| x + y)(1, 2) in h
+Return value: 3
+>>> CTRL-D
+```
 
 ### Build
 
-Tested on MacOS Ventura 13.4.1 (c) 
+Tested on Ubuntu 22.04 and MacOS Ventura 13.4.1 (c)
 
 #### Build prerequisites
 
@@ -40,6 +96,20 @@ cmake --build .
 ```
 cd build
 cmake --build . --target mlir-doc
+```
+
+### Docker
+
+Follow the instructions below if you'd prefer to use a docker container to build the project.
+
+```
+# Build Docker image
+docker build . -t lettuce
+# Create container and mount current directory in container
+docker create -t -i --name lettuce -v $(pwd):/lettuce lettuce bash
+# Start the container
+docker start -a -i lettuce
+
 ```
 
 ### Run

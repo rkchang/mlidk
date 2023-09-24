@@ -3,6 +3,7 @@
 #include "types.hpp"
 
 #include <cstddef>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -48,6 +49,8 @@ auto typeBinaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Lhs,
   case TokenOp::OpType::NOT:
     throw TypeError(Lhs.Loc, "Unsupported operation");
   }
+  std::cerr << "Unknown Optype" << std::endl;
+  std::exit(1);
 }
 
 auto typeUnaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Rhs)
@@ -71,6 +74,8 @@ auto typeUnaryOperator(TypeCtx Ctx, TokenOp::OpType Operator, Expr &Rhs)
   case TokenOp::OpType::OR:
     throw TypeError(Rhs.Loc, "Unsupported operation");
   }
+  std::cerr << "Unknown Optype" << std::endl;
+  std::exit(1);
 }
 
 auto typeCheck(TypeCtx Ctx, Expr &Exp, std::shared_ptr<Type> Expected) -> void {
@@ -242,4 +247,6 @@ auto typeInfer(TypeCtx Ctx, Expr &Exp) -> std::shared_ptr<Type> {
     Exp.Ty = FuncTy;
     return FuncTy;
   }
+  std::cerr << "Unknown Optype" << std::endl;
+  std::exit(1);
 }
