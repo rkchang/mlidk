@@ -30,6 +30,7 @@ Wrote output.o
 ❯ clang++ output.o -o output
 ❯ ./output
 4
+
 ~/dev/lettuce/build/lettucec
 ❯ ./lettucec ../../examples/if_func_lit.lettuce
 Wrote output.o
