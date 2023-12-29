@@ -50,18 +50,19 @@ Return value: 3
 >>> CTRL-D                                          # End input
 ```
 
-### Build
+## Build
 
 Tested on Ubuntu 22.04 and MacOS Ventura 13.4.1 (c)
 
 #### Build prerequisites
 
 ```
-clang
+clang++
 cmake
 clang-tidy
 Ninja/Make
 python3
+curl
 ```
 
 #### Building
@@ -76,37 +77,8 @@ chmod +x build.sh
 - `third-party` will be populated with the llvm source code.
 - `third-party/llvm-project/install/` will be where llvm is installed
 
-#### Incremental builds
 
-- after running build.sh, you can run the following to rebuild
-
-```
-cd build
-cmake --build .
-```
-
-#### Building Tablegen docs
-
-```
-cd build
-cmake --build . --target mlir-doc
-```
-
-### Docker
-
-Follow the instructions below if you'd prefer to use a docker container to build the project.
-
-```
-# Build Docker image
-docker build . -t lettuce
-# Create container and mount current directory in container
-docker create -t -i --name lettuce -v $(pwd):/lettuce lettuce bash
-# Start the container
-docker start -a -i lettuce
-
-```
-
-### Run
+## Run
 
 ```
 ./build/lettucec/lettucec <path_to_file>
@@ -124,6 +96,39 @@ docker start -a -i lettuce
 ```
 cd build
 cmake --build . --target clean
+```
+
+## Extra Build Instructions
+
+### Incremental builds
+
+- after running build.sh, you can run the following command to rebuild
+
+```
+cd build
+cmake --build .
+```
+
+
+### Building Tablegen docs
+
+```
+cd build
+cmake --build . --target mlir-doc
+```
+
+### Docker
+
+Follow the instructions below if you'd prefer to use a docker container to build the project.
+
+```
+# Build Docker image
+docker build . -t lettuce
+# Create container and mount current directory in container
+docker create -t -i --name lettuce -v $(pwd):/lettuce lettuce bash
+# Start the container
+docker start -a -i lettuce
+# Run build instructions in container
 ```
 
 ## Project structure
