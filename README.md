@@ -2,7 +2,7 @@
 
 Lettuce is a new functional programming language with a simple static type system. This repository contains its corresponding MLIR/LLVM based compiler/interpreter: `lettucec`.
 
-Example lettuce code:
+Example lettuce code that checks if a number is even or odd:
 
 ```
 let
@@ -25,36 +25,29 @@ Demo of compiler mode:
 
 ```
 ~/dev/lettuce/build/lettucec
-❯ ./lettucec ../../examples/print.lettuce
-Wrote output.o
-❯ clang++ output.o -o output
-❯ ./output
-4
-
+❯ cat ../../examples/print.lettuce                  # Print out the contents of print.lettuce
+let i = 1 in print(4)
 ~/dev/lettuce/build/lettucec
-❯ ./lettucec ../../examples/if_func_lit.lettuce
+❯ ./lettucec ../../examples/print.lettuce           # Compile print.lettuce
 Wrote output.o
-❯ clang++ output.o -o output
-❯ ./output
-❯ echo $?
-2
+❯ clang++ output.o -o output                        # Link generated object file
+❯ ./output                                          # Execute the generated binary `output`
+4
 ```
 
 Demo of interpreter mode:
 
 ```
 ~/dev/lettuce/build/lettucec
-❯ ./lettucec
->>> let i = (1 + 2) * 3 in i + 4
+❯ ./lettucec                                        # Start interpreter mode
+>>> let i = (1 + 2) * 3 in i + 4                    # ((1 + 2) * 3) + 4
 Return value: 13
->>> let i = 1 in print(4)
+>>> let i = 4 in print(i)                           # Print out the value of variable i
 4
 Return value: 3
->>> let h = (|x : i32, y : i32| x + y)(1, 2) in
-REPL:1:44: Parser Error:
->>> let h = (|x : i32, y : i32| x + y)(1, 2) in h
+>>> let h = (|x : i32, y : i32| x + y)(1, 2) in h   # Define a function that adds arguments x and y and call it with arguments x=1, y=2
 Return value: 3
->>> CTRL-D
+>>> CTRL-D                                          # End input
 ```
 
 ### Build
