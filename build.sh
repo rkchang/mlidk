@@ -42,7 +42,8 @@ cmake -G Ninja ../llvm \
    -DLLVM_INCLUDE_TOOLS=ON \
    -DLLVM_ENABLE_ASSERTIONS=ON \
    -DLLVM_ENABLE_RTTI=ON \
-   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 echo "----- Building llvm"
 cmake --build .
 cmake --build . --target install # This will install llvm to third-party/llvm-project/install as specified above

@@ -1,0 +1,20 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#fieldcode {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+}
+#field {
+    flex: 4;
+}
+#editor {
+    flex: 6;
+}
