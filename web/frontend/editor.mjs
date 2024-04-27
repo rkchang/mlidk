@@ -6,10 +6,22 @@ let editor = new EditorView({
   parent: document.getElementById("editor") 
 })
 
-editor.dom.addEventListener("keydown", (event) => {
+async function postEditorState() {
   let payload = {
     source: editor.state.doc.toString()
   }
-  console.log("hello");
+  const response = await fetch("http://127.0.0.1:3001/compile", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  })
+  console.log(response)
+  document.getElementById("result").innerText = await response.text()
+}
+
+editor.dom.addEventListener("keyup", (event) => {
+  postEditorState();
 });
 

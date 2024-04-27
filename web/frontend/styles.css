@@ -1,3 +1,5 @@
+/* https://stackoverflow.com/questions/27081513/using-css-displayflex-flexbox-and-or-javascript-to-make-adjustable-page */
+
 html, body {
     height: 100%;
 }
@@ -11,9 +13,11 @@ body {
     flex: 1;
     display: flex;
     flex-direction: row;
+    height: 100%;
 }
-#field {
+#result {
     flex: 4;
+    border: 1px solid black;
 }
 #editor {
     flex: 6;

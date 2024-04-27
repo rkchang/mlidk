@@ -1,5 +1,10 @@
-start:
-	uvicorn main:app --reload --host=100.71.196.81
+start: bundle
+	cd backend && npm run dev
+# localhost:8000/index.html
 
 bundle:
 	cd frontend && $(MAKE)
+	
+install:
+	cd frontend && npm install
+	cd backend && npm install
