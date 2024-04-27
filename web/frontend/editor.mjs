@@ -7,7 +7,9 @@ let editor = new EditorView({
 })
 
 editor.dom.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    console.log("hello");
+  let payload = {
+    source: editor.state.doc.toString()
   }
+  console.log("hello");
 });
+
