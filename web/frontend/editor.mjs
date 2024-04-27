@@ -2,7 +2,7 @@ import {EditorView, basicSetup} from "codemirror"
 import {javascript} from "@codemirror/lang-javascript"
 
 let editor = new EditorView({
-  extensions: [basicSetup, javascript()],
+  extensions: [basicSetup],
   parent: document.getElementById("editor") 
 })
 
@@ -18,7 +18,16 @@ async function postEditorState() {
     body: JSON.stringify(payload)
   })
   console.log(response)
-  document.getElementById("result").innerText = await response.text()
+  const json = await response.json();
+  const output =`
+    Compile retcode: ${json.compile_retcode}\n
+    Compile stdout: ${json.compile_stdout}\n
+    Compile stderr: ${json.compile_stderr}\n
+    Exec retcode: ${json.exec_retcode}\n
+    Exec stdout: ${json.exec_stdout}\n
+    Exec stderr: ${json.exec_stderr}\n
+    `
+  document.getElementById("result").innerText = output;
 }
 
 editor.dom.addEventListener("keyup", (event) => {

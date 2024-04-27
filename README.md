@@ -157,3 +157,18 @@ unittests/                  # contains googletest unittests
 - For example, `RomaineOps.td` corresponds to `RomaineOps.h`
   - after building, `RomaineOps.h.inc` will be generated in the build directory
   - `RomaineOps.h` includes this file
+
+## Playground
+
+### Build
+```
+cd web
+make install
+```
+
+### Run
+```
+cd web
+make
+```
+- Should be runing on http://127.0.0.1:3001/
