@@ -50,7 +50,8 @@ cmake -G Ninja ../llvm \
    -DLLVM_INCLUDE_TOOLS=ON \
    -DLLVM_ENABLE_ASSERTIONS=ON \
    -DLLVM_ENABLE_RTTI=ON \
-   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+   -DLLVM_USE_LINKER=lld
 echo "----- Building llvm"
 cmake --build .
 cmake --build . --target install # This will install llvm to third-party/llvm-project/install as specified above
@@ -61,7 +62,9 @@ cd "$ROOT"
 rm -rf "$ROOT/build"
 mkdir build
 cd build
-cmake .. \
+cmake -G Ninja .. \
   -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_LINKER=lld \
+  -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld"
 cmake --build .

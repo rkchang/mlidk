@@ -23,19 +23,13 @@ RUN apt-get -y update && \
     curl \
     sudo \
     ca-certificates \
+    lld \
     --no-install-recommends
 
 # Create a group and user with the specified UID/GID
 RUN groupadd -g ${USER_GID} ${USER_NAME} && \
     useradd -l -u ${USER_UID} -g ${USER_GID} -m ${USER_NAME} && \
     usermod -aG sudo ${USER_NAME}
-
-# Set the working directory inside the container
-WORKDIR /app
-
-# Change ownership of the working directory to the non-root user
-# This is important if /app is copied into the container or if files are created here before USER switch
-RUN chown ${USER_NAME}:${USER_GID} /app
 
 # Set the user for subsequent commands
 USER ${USER_NAME}
