@@ -1,8 +1,12 @@
 FROM ubuntu:22.04
 CMD bash
 
-# Install Ubuntu packages.
-# Please add packages in alphabetical order.
+# Define build arguments for user ID and group ID, with common defaults
+ARG USER_UID=1000
+ARG USER_GID=1000
+ARG USER_NAME=dev
+
+# Install Ubuntu packages as root.
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update && \
     apt-get -y install \
@@ -16,4 +20,19 @@ RUN apt-get -y update && \
     python3 \
     ninja-build \
     fish \
-    curl
+    curl \
+    sudo \
+    ca-certificates \
+    lld \
+    --no-install-recommends
+
+# Create a group and user with the specified UID/GID
+RUN groupadd -g ${USER_GID} ${USER_NAME} && \
+    useradd -l -u ${USER_UID} -g ${USER_GID} -m ${USER_NAME} && \
+    usermod -aG sudo ${USER_NAME}
+
+# Set the user for subsequent commands
+USER ${USER_NAME}
+
+# Set environment variable for the user's home directory within the container
+ENV HOME=/home/${USER_NAME}
