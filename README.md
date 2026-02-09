@@ -125,9 +125,9 @@ Follow the instructions below if you'd prefer to use a docker container to build
 # Build Docker image
 docker build . -t lettuce
 # Create container and mount current directory in container
-docker create -t -i --name lettuce -v $(pwd):/lettuce lettuce bash
+docker run -d --name lettuce -v "$(pwd):/lettuce" lettuce sleep infinity
 # Start the container
-docker start -a -i lettuce
+docker exec -it lettuce bash
 # Run build instructions in container
 ```
 
