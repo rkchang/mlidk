@@ -20,16 +20,20 @@ RUN apt-get -y update && \
     python3 \
     ninja-build \
     fish \
+    zsh \
     curl \
     sudo \
     ca-certificates \
     lld \
-    --no-install-recommends
+    vim \
+    ripgrep
 
 # Create a group and user with the specified UID/GID
 RUN groupadd -g ${USER_GID} ${USER_NAME} && \
     useradd -l -u ${USER_UID} -g ${USER_GID} -m ${USER_NAME} && \
-    usermod -aG sudo ${USER_NAME}
+    usermod -aG sudo ${USER_NAME} && \
+    echo "${USER_NAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nopasswd_sudo
+
 
 # Set the user for subsequent commands
 USER ${USER_NAME}
