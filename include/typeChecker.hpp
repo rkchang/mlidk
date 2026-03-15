@@ -1,11 +1,29 @@
 #pragma once
 
-#include "AST.fwd.hpp"
 #include "ASTVisitor.hpp"
-class ASTPrinter : public ASTVisitor {
-public:
-  auto visit(RootNode &Node, std::any Context) -> std::any override;
+#include "AST.hpp"
+#include "lexer.hpp"
+#include "types.hpp"
 
+#include <any>
+#include <memory>
+#include <unordered_map>
+
+using TypeCtx = std::unordered_map<std::string, std::shared_ptr<Type>>;
+
+class TypeError : public UserError {
+public:
+  TypeError(Location Loc, std::string Message)
+      : UserError(Loc.Filename, Loc.Line, Loc.Column,
+                  "Type Error: " + Message){};
+};
+
+class TypeChecker : public ASTVisitor {
+public:
+  TypeCtx Ctx;
+  TypeChecker(TypeCtx Ctx) : Ctx(Ctx) {}
+
+  auto visit(RootNode &Node, std::any Context) -> std::any override;
   auto visit(DefExpr &Node, std::any Context) -> std::any override;
   auto visit(LetExpr &Node, std::any Context) -> std::any override;
   auto visit(IfExpr &Node, std::any Context) -> std::any override;

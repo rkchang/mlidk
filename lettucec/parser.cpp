@@ -12,6 +12,7 @@ Parser::Parser(Lexer &Lex) : Lex(Lex) {}
 
 auto Parser::parse() -> std::unique_ptr<RootNode> {
   auto Exp = expression();
+	expect({TokenTag::EOI});
   assert(Lex.isDone() && "Parser should fully consume input");
   return std::make_unique<RootNode>(Exp->Loc, std::move(Exp));
 }

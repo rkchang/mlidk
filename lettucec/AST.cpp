@@ -7,7 +7,7 @@ RootNode::RootNode(Location Loc, std::unique_ptr<Expr> Exp)
   assert(this->Exp != nullptr);
 }
 
-auto RootNode::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto RootNode::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
@@ -26,7 +26,7 @@ DefExpr::DefExpr(Location Loc, std::vector<DefBinder> Definitions,
   assert(this->Body != nullptr);
 }
 
-auto DefExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto DefExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
@@ -38,7 +38,7 @@ LetExpr::LetExpr(Location Loc, std::string Name, std::unique_ptr<Expr> Value,
   assert(this->Body != nullptr);
 }
 
-auto LetExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto LetExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
@@ -52,7 +52,7 @@ IfExpr::IfExpr(Location Loc, std::unique_ptr<Expr> Condition,
   assert(this->FalseBranch != nullptr);
 }
 
-auto IfExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto IfExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
@@ -64,7 +64,7 @@ BinaryExpr::BinaryExpr(Location Loc, std::unique_ptr<Expr> Left,
   assert(this->Right != nullptr);
 }
 
-auto BinaryExpr::accept(ASTVisitor &Visitor, std::any Context) const
+auto BinaryExpr::accept(ASTVisitor &Visitor, std::any Context)
     -> std::any {
   return Visitor.visit(*this, Context);
 }
@@ -75,7 +75,7 @@ UnaryExpr::UnaryExpr(Location Loc, TokenOp::OpType Operator,
   assert(this->Right != nullptr);
 }
 
-auto UnaryExpr::accept(ASTVisitor &Visitor, std::any Context) const
+auto UnaryExpr::accept(ASTVisitor &Visitor, std::any Context)
     -> std::any {
   return Visitor.visit(*this, Context);
 }
@@ -83,21 +83,21 @@ auto UnaryExpr::accept(ASTVisitor &Visitor, std::any Context) const
 IntExpr::IntExpr(Location Loc, int Value)
     : Expr(Loc, ExprKind::INT), Value(Value) {}
 
-auto IntExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto IntExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
 BoolExpr::BoolExpr(Location Loc, bool Value)
     : Expr(Loc, ExprKind::BOOL), Value(Value) {}
 
-auto BoolExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto BoolExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
 VarExpr::VarExpr(Location Loc, std::string Name)
     : Expr(Loc, ExprKind::VAR), Name(Name) {}
 
-auto VarExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto VarExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
@@ -105,7 +105,7 @@ CallExpr::CallExpr(Location Loc, std::unique_ptr<Expr> Func,
                    std::vector<std::unique_ptr<Expr>> Args)
     : Expr(Loc, ExprKind::CALL), Func(std::move(Func)), Args(std::move(Args)) {}
 
-auto CallExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto CallExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }
 
@@ -114,6 +114,6 @@ FuncExpr::FuncExpr(Location Loc,
                    std::unique_ptr<Expr> Body)
     : Expr(Loc, ExprKind::FUNC), Params(Params), Body(std::move(Body)) {}
 
-auto FuncExpr::accept(ASTVisitor &Visitor, std::any Context) const -> std::any {
+auto FuncExpr::accept(ASTVisitor &Visitor, std::any Context) -> std::any {
   return Visitor.visit(*this, Context);
 }

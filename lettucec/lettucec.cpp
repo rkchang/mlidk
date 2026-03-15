@@ -3,7 +3,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "passes.hpp"
-#include "type_checker.hpp"
+#include "typeChecker.hpp"
 #include "types.hpp"
 
 #include <cstdlib>
@@ -79,7 +79,10 @@ std::unique_ptr<RootNode> parseInputFile(const llvm::StringRef &Buffer,
   FuncT Ftype = {std::vector<Type>{*Int32T}, Int32T};
   TypeCtx.insert({"print", std::make_shared<FuncT>(Ftype)});
 
-  typeInfer(TypeCtx, *(AST->Exp));
+  auto TypeCheckr = TypeChecker(TypeCtx);
+  AST->accept(TypeCheckr, TypeCtx);
+  // typeInfer(TypeCtx, *(AST->Exp));
+
 
   if (Dbg || DbgAst) {
     std::cout << std::endl << "TAST:" << std::endl;

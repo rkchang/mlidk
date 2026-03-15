@@ -105,7 +105,7 @@ auto mlirType(Type &Ty, mlir::OpBuilder Buildr) -> mlir::Type {
 
 //
 
-auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(RootNode &Node, std::any Context) -> std::any {
   auto Loc = loc(Node.Loc);
   // Create a function declaration for printf, the signature is:
   //   i32 printf(i8*, ...)`
@@ -131,7 +131,7 @@ auto MLIRGen::visit(const RootNode &Node, std::any Context) -> std::any {
   return Fun;
 }
 
-auto MLIRGen::visit(const DefExpr &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(DefExpr &Node, std::any Context) -> std::any {
   const auto Scope =
       llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value>(SymbolTable);
 
@@ -177,7 +177,7 @@ auto MLIRGen::visit(const DefExpr &Node, std::any Context) -> std::any {
   return Node.Body->accept(*this, Context);
 }
 
-auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(LetExpr &Node, std::any Context) -> std::any {
   const llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> Scope(
       SymbolTable);
   auto V = Node.Value->accept(*this, Context);
@@ -186,7 +186,7 @@ auto MLIRGen::visit(const LetExpr &Node, std::any Context) -> std::any {
   return Node.Body->accept(*this, Context);
 }
 
-auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(IfExpr &Node, std::any Context) -> std::any {
   auto TR = mlir::TypeRange(mlirType(*Node.Ty, Buildr));
 
   // Compile condition first
@@ -231,7 +231,7 @@ auto MLIRGen::visit(const IfExpr &Node, std::any Context) -> std::any {
   return static_cast<mlir::Value>(Result);
 }
 
-auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(BinaryExpr &Node, std::any Context) -> std::any {
   auto Lhs = std::any_cast<mlir::Value>(Node.Left->accept(*this, Context));
   auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
   auto DataType = mlirType(*Node.Ty, Buildr);
@@ -279,7 +279,7 @@ auto MLIRGen::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   throw Error(Node.Loc, "Unknown binary operator");
 }
 
-auto MLIRGen::visit(const UnaryExpr &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(UnaryExpr &Node, std::any Context) -> std::any {
   switch (Node.Operator) {
   case TokenOp::OpType::NOT: {
     auto Rhs = std::any_cast<mlir::Value>(Node.Right->accept(*this, Context));
@@ -300,7 +300,7 @@ auto MLIRGen::visit(const UnaryExpr &Node, std::any Context) -> std::any {
   }
 }
 
-auto MLIRGen::visit(const IntExpr &Node, std::any) -> std::any {
+auto MLIRGen::visit(IntExpr &Node, std::any) -> std::any {
   auto DataType = Buildr.getI32Type();
   auto DataAttribute = Buildr.getI32IntegerAttr(Node.Value);
   auto Op = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
@@ -308,7 +308,7 @@ auto MLIRGen::visit(const IntExpr &Node, std::any) -> std::any {
   return static_cast<mlir::Value>(Op);
 }
 
-auto MLIRGen::visit(const BoolExpr &Node, std::any) -> std::any {
+auto MLIRGen::visit(BoolExpr &Node, std::any) -> std::any {
   auto DataType = Buildr.getI1Type();
   auto DataAttribute = Buildr.getBoolAttr(Node.Value);
   auto Op = Buildr.create<mlir::arith::ConstantOp>(loc(Node.Loc), DataType,
@@ -316,7 +316,7 @@ auto MLIRGen::visit(const BoolExpr &Node, std::any) -> std::any {
   return static_cast<mlir::Value>(Op);
 }
 
-auto MLIRGen::visit(const VarExpr &Node, std::any) -> std::any {
+auto MLIRGen::visit(VarExpr &Node, std::any) -> std::any {
   if (auto Variable = SymbolTable.lookup(Node.Name)) {
     return Variable;
   }
@@ -333,7 +333,7 @@ auto MLIRGen::addArgs(const std::vector<std::unique_ptr<Expr>> &Args,
   }
 }
 
-auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(CallExpr &Node, std::any Context) -> std::any {
   std::vector<mlir::Value> Args;
   // Check if it's a call to print
   if (auto *Var = dynamic_cast<VarExpr *>(Node.Func.get())) {
@@ -363,7 +363,7 @@ auto MLIRGen::visit(const CallExpr &Node, std::any Context) -> std::any {
   return static_cast<mlir::Value>(Call->getResult(0));
 }
 
-auto MLIRGen::visit(const FuncExpr &Node, std::any Context) -> std::any {
+auto MLIRGen::visit(FuncExpr &Node, std::any Context) -> std::any {
   // Note how we need to generate a mlir::FunctionType, not mlir::Type,
   // otherwise the overload resolution for FuncOp.build won't work
   auto *T = static_cast<FuncT *>(Node.Ty.get());

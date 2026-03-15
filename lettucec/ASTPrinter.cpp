@@ -47,7 +47,7 @@ auto printDefBinder(const DefBinder &Binder, int Context) -> void {
 
 //
 
-auto ASTPrinter::visit(const RootNode &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(RootNode &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "RootNode:"
             << "\n";
   auto NewContext = incrContext(Context);
@@ -55,7 +55,7 @@ auto ASTPrinter::visit(const RootNode &Node, std::any Context) -> std::any {
   return NULL;
 }
 
-auto ASTPrinter::visit(const DefExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(DefExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "DefExpr:\n";
   auto NewContext = incrContext(Context);
   for (auto &Binder : Node.Definitions) {
@@ -65,7 +65,7 @@ auto ASTPrinter::visit(const DefExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 
-auto ASTPrinter::visit(const LetExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(LetExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "LetExpr: "
             << ".Name=" << Node.Name << " .Type=" << getType(Node) << "\n";
   auto NewContext = incrContext(Context);
@@ -74,7 +74,7 @@ auto ASTPrinter::visit(const LetExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 
-auto ASTPrinter::visit(const IfExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(IfExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "IfExpr:"
             << " .Type=" << getType(Node) << "\n";
   auto NewContext = incrContext(Context);
@@ -84,7 +84,7 @@ auto ASTPrinter::visit(const IfExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 
-auto ASTPrinter::visit(const BinaryExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(BinaryExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "BinaryExpr: "
             << ".Operator="
             << " " << TokenOp::OpToStr(Node.Operator)
@@ -95,7 +95,7 @@ auto ASTPrinter::visit(const BinaryExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 
-auto ASTPrinter::visit(const UnaryExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(UnaryExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "UnaryExpr: "
             << ".Operator="
             << " " << TokenOp::OpToStr(Node.Operator)
@@ -105,26 +105,26 @@ auto ASTPrinter::visit(const UnaryExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 
-auto ASTPrinter::visit(const IntExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(IntExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "IntExpr:"
             << " " << Node.Value << " .Type=" << getType(Node) << "\n";
   return NULL;
 }
 
-auto ASTPrinter::visit(const BoolExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(BoolExpr &Node, std::any Context) -> std::any {
   const auto *Value = Node.Value ? "true" : "false";
   std::cout << getPrefix(Context) << "BoolExpr:"
             << " " << Value << " .Type=" << getType(Node) << "\n";
   return NULL;
 }
 
-auto ASTPrinter::visit(const VarExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(VarExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "VarExpr:"
             << " " << Node.Name << " .Type=" << getType(Node) << "\n";
   return NULL;
 }
 
-auto ASTPrinter::visit(const CallExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(CallExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "CallExpr:"
             << " .Type=" << getType(Node) << "\n";
   auto NewContext = incrContext(Context);
@@ -135,7 +135,7 @@ auto ASTPrinter::visit(const CallExpr &Node, std::any Context) -> std::any {
   return NULL;
 }
 
-auto ASTPrinter::visit(const FuncExpr &Node, std::any Context) -> std::any {
+auto ASTPrinter::visit(FuncExpr &Node, std::any Context) -> std::any {
   std::cout << getPrefix(Context) << "FuncExpr:"
             << " .Type=" << getType(Node) << "\n";
   auto NewContext = incrContext(Context);
