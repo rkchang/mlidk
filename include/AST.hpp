@@ -5,9 +5,7 @@
 #include "types.hpp"
 
 #include <any>
-#include <cstddef>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -23,7 +21,7 @@ public:
 
   ASTNode(Location Loc) : Loc(Loc) {}
   virtual ~ASTNode() = default;
-  virtual std::any accept(ASTVisitor &Visitor, std::any Context) const = 0;
+  virtual std::any accept(ASTVisitor &Visitor, std::any Context) = 0;
 };
 
 //---------------------------------------------------------------------------//
@@ -44,7 +42,7 @@ public:
   std::unique_ptr<Expr> Exp;
 
   RootNode(Location Loc, std::unique_ptr<Expr> Exp);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 struct DefBinder {
@@ -66,7 +64,7 @@ public:
   std::unique_ptr<Expr> Body;
   DefExpr(Location Loc, std::vector<DefBinder> Definitions,
           std::unique_ptr<Expr> Body);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class LetExpr : public Expr {
@@ -77,7 +75,7 @@ public:
 
   LetExpr(Location Loc, std::string Name, std::unique_ptr<Expr> Value,
           std::unique_ptr<Expr> Body);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class IfExpr : public Expr {
@@ -88,7 +86,7 @@ public:
 
   IfExpr(Location Loc, std::unique_ptr<Expr> Condition,
          std::unique_ptr<Expr> TrueBranch, std::unique_ptr<Expr> FalseBranch);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class BinaryExpr : public Expr {
@@ -99,7 +97,7 @@ public:
 
   BinaryExpr(Location Loc, std::unique_ptr<Expr> Left, TokenOp::OpType Operator,
              std::unique_ptr<Expr> Right);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class UnaryExpr : public Expr {
@@ -109,7 +107,7 @@ public:
 
   UnaryExpr(Location Loc, TokenOp::OpType Operator,
             std::unique_ptr<Expr> Right);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class IntExpr : public Expr {
@@ -117,7 +115,7 @@ public:
   int Value;
 
   IntExpr(Location Loc, int Value);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class BoolExpr : public Expr {
@@ -125,7 +123,7 @@ public:
   bool Value;
 
   BoolExpr(Location Loc, bool Value);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class VarExpr : public Expr {
@@ -133,7 +131,7 @@ public:
   std::string Name;
 
   VarExpr(Location Loc, std::string Name);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class CallExpr : public Expr {
@@ -143,7 +141,7 @@ public:
 
   CallExpr(Location Loc, std::unique_ptr<Expr> Func,
            std::vector<std::unique_ptr<Expr>> Args);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };
 
 class FuncExpr : public Expr {
@@ -153,5 +151,5 @@ public:
 
   FuncExpr(Location Loc, std::vector<std::pair<std::string, Type>> Params,
            std::unique_ptr<Expr> Body);
-  auto accept(ASTVisitor &Visitor, std::any Context) const -> std::any override;
+  auto accept(ASTVisitor &Visitor, std::any Context) -> std::any override;
 };

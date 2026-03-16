@@ -4,12 +4,13 @@ add_executable(lettucec
         lettucec.cpp # main file for letttucec
         types.cpp
         AST.cpp
-        type_checker.cpp
         ASTPrinter.cpp
         lexer.cpp
         parser.cpp
         passes.cpp
-        MLIR_gen.cpp)
+        MLIR_gen.cpp
+				typeChecker.cpp
+)
 
 
 # Debug Build flags
@@ -32,6 +33,7 @@ target_compile_options(lettucec PRIVATE
         -Wextra
         -fPIE
         -Werror
+	-Wno-unused-parameter
 )
 
 llvm_map_components_to_libnames(llvm_libs support core irreader orcjit nativecodegen)
